@@ -1,0 +1,10 @@
+{
+  "name": "@cuonghoang1103/ch14-chao",
+  "version": "0.0.0",
+  "description": "Goi npm nho nhat cho bai 14.3 (GitHub Packages)",
+  "type": "module",
+  "main": "index.js",
+  "files": ["index.js"],
+  "repository": { "type": "git", "url": "https://github.com/cuonghoang1103/ga-san-tap.git" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" }
+}

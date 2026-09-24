@@ -1,0 +1,15 @@
+# Chuong 14.1 — bay "check bat buoc bi skip vi paths".
+name: ch14-paths
+on:
+  pull_request:
+    branches: [ch14-chat-luong]
+    paths: ['ch14/backend/**']
+permissions:
+  contents: read
+jobs:
+  backend-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: cd ch14/backend && npm test

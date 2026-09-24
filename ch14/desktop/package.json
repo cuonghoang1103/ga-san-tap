@@ -1,0 +1,10 @@
+{
+  "name": "ch14-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "node ../kiem-ma.js src",
+    "test": "node --test"
+  }
+}

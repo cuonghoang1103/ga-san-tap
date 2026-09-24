@@ -1,0 +1,68 @@
+# Chuong 14.1 — cong chat luong: ba job kiem + hai kieu "check tong hop".
+name: ch14-cong
+on:
+  push:
+    branches: [ch14-chat-luong]
+  pull_request:
+    branches: [ch14-chat-luong]
+  merge_group:            # can khi bat merge queue (chi co o kho cua to chuc)
+permissions:
+  contents: read
+concurrency:
+  group: ch14-cong-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Lint ca ba goi
+        run: for p in backend frontend desktop; do (cd ch14/$p && npm run -s lint) || exit 1; done
+
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Test ca ba goi
+        run: for p in backend frontend desktop; do (cd ch14/$p && npm test) || exit 1; done
+
+  e2e-dem:
+    # Job chi chay khi PR co nhan "can-e2e" — con lai bi SKIP.
+    if: contains(github.event.pull_request.labels.*.name, 'can-e2e')
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "e2e gia lap"
+
+  cong-ngay-tho:
+    # SAI: khong co if: always() => mot job needs hong thi job nay bi SKIP.
+    needs: [lint, test, e2e-dem]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "moi thu deu xanh?"
+
+  cong-tong:
+    # DUNG: luon chay, doc ket qua tung job, do neu co failure/cancelled.
+    if: always()
+    needs: [lint, test, e2e-dem]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Doc ket qua cac job
+        env:
+          KQ: ${{ toJSON(needs) }}
+        run: |
+          echo "$KQ" | jq -r 'to_entries[] | "\(.key) = \(.value.result)"'
+          if echo "$KQ" | jq -e 'any(.[]; .result == "failure" or .result == "cancelled")' > /dev/null; then
+            echo "::error title=cong-tong::co job do hoac bi huy"
+            exit 1
+          fi
+          echo "cong-tong: khong co job nao do (skipped duoc tinh la dat)"

@@ -1,0 +1,19 @@
+# Chuong 14.2 — minh hoa script injection VO HAI (du lieu gia, khong secret, permissions rong).
+# Buoc "CACH SAI" co y giu lai de zizmor/actionlint bat; KHONG chep vao kho that.
+name: ch14-tiem
+on:
+  pull_request:
+    branches: [ch14-chat-luong]
+    types: [opened, edited, synchronize]
+permissions: {}
+jobs:
+  tieu-de:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: CACH SAI - bieu thuc dan thang vao script
+        run: echo "Tieu de PR la - ${{ github.event.pull_request.title }}"
+      - name: CACH DUNG - qua bien moi truong
+        env:
+          TIEU_DE: ${{ github.event.pull_request.title }}
+        run: echo "Tieu de PR la - $TIEU_DE"

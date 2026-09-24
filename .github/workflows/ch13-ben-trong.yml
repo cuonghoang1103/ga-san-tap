@@ -1,0 +1,56 @@
+# 13.1 — Nhin vao ben trong mot runner GitHub-hosted: tien trinh, thu muc, ket noi, nhat ky.
+name: ch13-ben-trong
+on:
+  push:
+    branches: [ch13-*]
+    paths: ['.github/workflows/ch13-ben-trong.yml']
+permissions:
+  contents: read
+jobs:
+  soi:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Danh tinh runner
+        run: |
+          echo "RUNNER_NAME=$RUNNER_NAME"
+          echo "RUNNER_ENVIRONMENT=$RUNNER_ENVIRONMENT RUNNER_OS=$RUNNER_OS RUNNER_ARCH=$RUNNER_ARCH"
+          echo "ImageOS=$ImageOS ImageVersion=$ImageVersion"
+          echo "nproc=$(nproc) mem=$(free -g | awk '/Mem/{print $2}')G disk_free=$(df -h / | awk 'NR==2{print $4}')"
+          echo "whoami=$(whoami) hostname=$(hostname)"
+      - name: Tien trinh cua runner
+        run: |
+          ps -eo pid,ppid,user,etime,args --forest | grep -E "Runner\.(Listener|Worker)|provjobd|run(svc)?\.sh|hosted" | grep -v grep | cut -c1-160 || true
+      - name: Thu muc cua runner
+        run: |
+          echo "RUNNER_WORKSPACE=$RUNNER_WORKSPACE"
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "RUNNER_TEMP=$RUNNER_TEMP"
+          echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
+          echo "--- ls /home/runner/work"; ls -la /home/runner/work
+          echo "--- ls _actions"; ls /home/runner/work/_actions 2>/dev/null || true
+          echo "--- ls _temp"; ls -la "$RUNNER_TEMP" | head -12
+          echo "--- ung dung runner"; ls /home/runner/actions-runner 2>/dev/null; ls /home/runner/actions-runner/cached 2>/dev/null | head
+      - name: Cau hinh runner (.runner, khong co bi mat)
+        run: |
+          for f in /home/runner/actions-runner/cached/.runner /home/runner/actions-runner/.runner; do
+            if [ -f "$f" ]; then echo "== $f"; jq '{agentName, poolName, ephemeral, disableUpdate, isHostedServer, workFolder}' "$f" 2>/dev/null || true; fi
+          done
+      - name: Ket noi mang cua runner (chi chieu RA)
+        run: |
+          sudo ss -tnp state established 2>/dev/null | grep -i -E "Runner|dotnet" | awk '{print $3, $4, $5}' | sed -E 's/users:.*//' | head -12 || true
+          echo "--- cong dang NGHE (listen) cua tien trinh runner:"
+          sudo ss -tlnp 2>/dev/null | grep -i runner || echo "(khong co — runner khong mo cong nao)"
+      - name: Nhat ky _diag cua runner
+        run: |
+          d=$(sudo find / -type d -name _diag -path "*actions-runner*" 2>/dev/null | head -1)
+          echo "_diag = $d"; sudo ls "$d" 2>/dev/null | head -20
+          for f in $(sudo ls "$d" 2>/dev/null | grep -E '^(Runner|Worker)_' | head -3); do
+            echo "=== $f"
+            sudo grep -h -E "Listening for Jobs|GetNextMessage|Job request|message|Running job|Job .* completed|Broker|session|Received|long" "$d/$f" \
+              | sed -E 's/[A-Za-z0-9_.-]{40,}/<...>/g' | head -12 | cut -c1-200
+          done

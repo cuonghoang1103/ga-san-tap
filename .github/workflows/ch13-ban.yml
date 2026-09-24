@@ -1,0 +1,40 @@
+# 13.3 — May sach hay ban: dau vet giua hai job, tien trinh mo coi, va doi so dong lenh.
+name: ch13-ban
+on:
+  push:
+    branches: [ch13-*]
+    paths: ['.github/workflows/ch13-ban.yml']
+permissions:
+  contents: read
+jobs:
+  de-lai:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: De lai dau vet
+        run: |
+          echo "tu job de-lai, run $GITHUB_RUN_ID" | tee /tmp/ch13-dau-vet ~/ch13-dau-vet
+          echo "RUNNER_NAME=$RUNNER_NAME"
+      - name: Mot tien trinh chay nen vuot qua buoc
+        run: |
+          nohup sleep 600 > /dev/null 2>&1 &
+          echo "da chay nen sleep 600, pid $!"
+      - name: Doi so dong lenh ai cung doc duoc
+        run: |
+          echo "::add-mask::gia-tri-thu-khong-that-123"
+          bash -c 'sleep 20' ch13 --token=gia-tri-thu-khong-that-123 &
+          sleep 1
+          echo "ps thay (log da che):"; ps -eo pid,user,args | grep -- '--token' | grep -v grep
+          echo "so tien trinh co chuoi that trong doi so: $(ps -eo args | grep -c 'gia-tri-thu-khong-that-123')"
+  xem-lai:
+    needs: de-lai
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Job sau thay gi
+        run: |
+          echo "RUNNER_NAME=$RUNNER_NAME"
+          for f in /tmp/ch13-dau-vet ~/ch13-dau-vet; do
+            if [ -f "$f" ]; then echo "BAN: $f = $(cat "$f")"; else echo "sach: khong co $f"; fi
+          done
+          pgrep -a sleep || echo "khong co tien trinh sleep nao"

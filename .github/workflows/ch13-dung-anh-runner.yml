@@ -1,0 +1,44 @@
+# 13.2 — Dung THAT anh runner ephemeral cua ch13/runner tren runner GitHub-hosted (co Docker),
+# chay toi DUNG buoc can token. Khong dang ky runner nao: token o day la chuoi gia.
+name: ch13-dung-anh-runner
+on:
+  push:
+    branches: [ch13-*]
+    paths: ['.github/workflows/ch13-dung-anh-runner.yml', 'ch13/runner/**']
+permissions:
+  contents: read
+jobs:
+  dung-anh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ban runner moi nhat
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/actions/runner/releases/latest --jq '.tag_name + " " + .published_at'
+      - name: docker build
+        run: |
+          t0=$(date +%s)
+          docker build -q -t ga13-runner ch13/runner
+          echo "build xong sau $(( $(date +%s) - t0 ))s"
+          docker images ga13-runner --format '{{.Repository}}:{{.Tag}} {{.Size}}'
+      - name: Phien ban va cac co cua config.sh
+        run: |
+          docker run --rm --entrypoint ./config.sh ga13-runner --version
+          docker run --rm --entrypoint ./config.sh ga13-runner --help 2>&1 \
+            | grep -E -- "--(unattended|url|token|name|labels|no-default-labels|ephemeral|disableupdate|work|replace|runnergroup|check|pat)\b" | head -20
+      - name: Thieu bien moi truong thi dung ngay
+        run: docker run --rm ga13-runner || echo "exit=$?"
+      - name: Chay bang root thi config.sh tu choi
+        run: |
+          docker run --rm --user root --entrypoint ./config.sh ga13-runner \
+            --unattended --url https://github.com/cuonghoang1103/ga-san-tap --token gia-tri-thu-khong-that-123 || echo "exit=$?"
+      - name: Token gia thi GitHub tu choi dang ky
+        run: |
+          docker run --rm -e REPO_URL=https://github.com/cuonghoang1103/ga-san-tap \
+            -e RUNNER_TOKEN=gia-tri-thu-khong-that-123 -e RUNNER_NAME=ga13-thu-token-gia \
+            ga13-runner 2>&1 | tail -15 || true
+      - name: Khong con container nao
+        run: docker ps -a --filter ancestor=ga13-runner --format '{{.ID}} {{.Status}}' | wc -l

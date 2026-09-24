@@ -1,0 +1,86 @@
+# 13.3 — Service container Postgres: job chay tren may, va job chay trong container.
+name: ch13-dich-vu
+on:
+  push:
+    branches: [ch13-*]
+    paths: ['.github/workflows/ch13-dich-vu.yml']
+permissions:
+  contents: read
+jobs:
+  tren-may:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      csdl:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: gia-tri-thu-khong-that-123
+          POSTGRES_DB: phongkham
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: gia-tri-thu-khong-that-123
+      PGDATABASE: phongkham
+    steps:
+      - name: Container dang chay tren may runner
+        run: docker ps --format '{{.Names}} | {{.Image}} | {{.Status}} | {{.Ports}}'
+      - name: Dung csdl qua localhost:5432
+        run: |
+          psql -c "create table lich (id serial primary key, benh_nhan text, gio timestamptz default now())"
+          psql -c "insert into lich (benh_nhan) values ('An'), ('Binh')"
+          psql -tAc "select count(*) || ' lich hen' from lich"
+          psql -tAc "show server_version"
+  trong-container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    container:
+      image: node:22-bookworm-slim
+    services:
+      csdl:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: gia-tri-thu-khong-that-123
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+    steps:
+      - name: Toi dang o dau
+        run: |
+          grep PRETTY_NAME /etc/os-release
+          echo "whoami=$(whoami) pwd=$PWD"
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "PID 1 = $(tr '\0' ' ' < /proc/1/cmdline)"
+          echo "node $(node --version)"
+          getent hosts csdl || true
+      - name: Dung csdl qua ten dich vu csdl:5432
+        run: |
+          mkdir -p /tmp/thu && cd /tmp/thu && npm init -y >/dev/null && npm i pg@8 --silent
+          cat > thu.mjs <<'JS'
+          import pg from 'pg';
+          const c = new pg.Client({ host: 'csdl', user: 'postgres', password: 'gia-tri-thu-khong-that-123' });
+          const t0 = Date.now(); await c.connect();
+          const r = await c.query("select version()");
+          console.log('ket noi', Date.now() - t0, 'ms ·', r.rows[0].version.split(' on ')[0]);
+          await c.end();
+          JS
+          node thu.mjs
+  khong-cho:
+    # Service KHONG co health-check: buoc dau tien co the toi truoc khi Postgres san sang.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      csdl:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: gia-tri-thu-khong-that-123
+        ports: ['5432:5432']
+    steps:
+      - name: Dem so lan thu cho toi khi Postgres nhan ket noi
+        run: |
+          t0=$(date +%s%3N); n=0
+          until pg_isready -h localhost -U postgres -q; do n=$((n+1)); sleep 0.2; done
+          echo "san sang sau $n lan thu, $(( $(date +%s%3N) - t0 )) ms ke tu buoc dau tien"

@@ -1,0 +1,24 @@
+# Job DUY NHAT cua Chuong 13 chay tren runner self-hosted.
+# CHI workflow_dispatch (khong push, khong pull_request) + nhan rieng ch13-tam-thoi.
+# Runner nhan nay chi song trong mot container ephemeral: xem ch13/runner/chay-mot-job.sh.
+name: ch13-tu-host
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mot-job:
+    runs-on: [self-hosted, ch13-tam-thoi]
+    timeout-minutes: 5
+    steps:
+      - name: Toi dang chay o dau
+        run: |
+          echo "RUNNER_NAME=$RUNNER_NAME RUNNER_ENVIRONMENT=$RUNNER_ENVIRONMENT"
+          echo "RUNNER_OS=$RUNNER_OS RUNNER_ARCH=$RUNNER_ARCH"
+          echo "whoami=$(whoami) pwd=$PWD"
+          grep PRETTY_NAME /etc/os-release
+          echo "nproc=$(nproc)"
+      - name: Dau vet cua job truoc
+        run: |
+          if [ -f /tmp/ch13-dau-vet ]; then echo "BAN: con dau vet tu $(cat /tmp/ch13-dau-vet)"; else echo "sach: khong co dau vet"; fi
+          echo "$GITHUB_RUN_ID" > /tmp/ch13-dau-vet

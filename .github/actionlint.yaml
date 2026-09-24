@@ -1,0 +1,4 @@
+# Nhan tu dat cua runner self-hosted (Chuong 13) — de actionlint khong bao "label is unknown".
+self-hosted-runner:
+  labels:
+    - ch13-tam-thoi

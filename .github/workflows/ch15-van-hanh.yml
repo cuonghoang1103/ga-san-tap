@@ -1,0 +1,99 @@
+# Chuong 15 · bai 15.4 — giu pipeline khoe: test chap chon, chi phi, don cache/artifact, thong bao.
+name: ch15 · van hanh
+on:
+  push:
+    branches: [ch15-van-hanh]
+    paths: ['ch15/van-hanh/**', '.github/workflows/ch15-van-hanh.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  chap-chon:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Chay moi ban 40 lan, dem so lan do
+        working-directory: ch15/van-hanh
+        run: |
+          for ban in chap-chon da-sua; do
+            do=0
+            for i in $(seq 1 40); do
+              node --test "nhac-lich-$ban.test.js" >/dev/null 2>&1 || do=$((do+1))
+            done
+            echo "$ban: $do/40 lan DO"
+            echo "| $ban | $do/40 |" >> ket-qua.md
+          done
+          { echo "### Test chap chon — 40 lan moi ban"; echo "| ban | so lan do |"; echo "|---|---|"; cat ket-qua.md; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Mot lan chay le cua ban chap chon (xem no bao gi khi do)
+        working-directory: ch15/van-hanh
+        continue-on-error: true
+        run: |
+          for i in $(seq 1 10); do
+            if ! node --test nhac-lich-chap-chon.test.js > lan.txt 2>&1; then
+              echo "do o lan thu $i:"; grep -E "not ok|expected|actual|AssertionError" lan.txt | head -6; exit 1
+            fi
+          done
+          echo "10 lan deu xanh (hiem)"
+
+  don-dep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write     # xoa cache / artifact can quyen nay
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+    steps:
+      - name: Tao mot cache rac de lat nua xoa
+        run: mkdir -p rac && head -c 2000000 /dev/urandom > rac/tep.bin
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: rac
+          key: ch15-rac-${{ github.run_id }}
+      - name: Tao mot artifact song 1 ngay
+        run: echo "bao cao run ${GITHUB_RUN_ID}" > bao-cao.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ch15-bao-cao
+          path: bao-cao.txt
+          retention-days: 1
+      - name: Kho dang giu bao nhieu cache
+        run: |
+          gh api "repos/$R/actions/cache/usage" --jq '"tong: \(.active_caches_count) cache, \(.active_caches_size_in_bytes) byte"'
+          echo "--- cache cua chuong 15 ---"
+          gh cache list --repo "$R" --limit 100 --json key,sizeInBytes,lastAccessedAt \
+            --jq '.[] | select(.key | test("ch15|node-cache|buildkit|index-buildkit")) | "\(.sizeInBytes)\t\(.lastAccessedAt)\t\(.key)"' | head -15
+      - name: Xoa DUNG cache rac cua run nay (khong dung cache cua chuong khac)
+        run: |
+          gh cache delete "ch15-rac-${GITHUB_RUN_ID}" --repo "$R"
+          gh cache list --repo "$R" --key "ch15-rac-" --json key --jq 'length' | xargs -I{} echo "con lai {} cache ch15-rac-*"
+      - name: Artifact cua run nay het han luc nao
+        run: |
+          gh api "repos/$R/actions/runs/${GITHUB_RUN_ID}/artifacts" \
+            --jq '.artifacts[] | "\(.name)\t\(.size_in_bytes) byte\thet han \(.expires_at)"'
+
+  thong-bao:
+    needs: [chap-chon, don-dep]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Tom tat + annotation + huy hieu
+        env:
+          KQ: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "::notice title=Pipeline ch15::ket qua cac job: $KQ"
+          BADGE="https://github.com/${GITHUB_REPOSITORY}/actions/workflows/ch15-cd.yml/badge.svg?branch=ch15-capstone"
+          {
+            echo "### Suc khoe pipeline ch15"
+            echo "![ch15 CD]($BADGE)"
+            echo ""
+            echo "Ket qua: \`$KQ\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "huy hieu: $BADGE"
+          case "$KQ" in *failure*) echo "[THONG BAO GIA LAP] co job do — gui link ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}";; esac

@@ -1,0 +1,32 @@
+# Chuong 10 · ca 2 — SEED VO (08/08/2026): doi ten enum, checklist xanh, seed vo luc CHAY.
+name: ch10-seed
+on:
+  push:
+    branches: [ch10-chan-doan]
+    paths: ['ch10/seed/**', '.github/workflows/ch10-seed.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  seed:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: prod
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 2s --health-retries 20
+    defaults:
+      run:
+        working-directory: ch10/seed
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm i --no-audit --no-fund --loglevel=error
+      - name: Tai lap
+        run: ./chay.sh

@@ -1,0 +1,5 @@
+{ "name": "ch10-seed", "private": true,
+  "scripts": { "typecheck:seed": "tsc -p tsconfig.seed.json" },
+  "prisma": { "seed": "tsx prisma/seed.ts" },
+  "dependencies": { "@prisma/client": "5.22.0" },
+  "devDependencies": { "prisma": "5.22.0", "typescript": "5.6.3", "tsx": "4.19.1", "@types/node": "22.10.2" } }

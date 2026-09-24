@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// 08/08/2026: CODE doi ten thanh CODE_REVIEW cho khop frontend
+enum ContentType {
+  VLOG
+  AFFILIATE
+  CODE_REVIEW
+  REVIEW
+  IDEA
+  OTHER
+}
+model ContentIdea {
+  id            Int          @id @default(autoincrement())
+  title         String
+  suggestedType ContentType? @map("suggested_type")
+  @@map("content_ideas")
+}

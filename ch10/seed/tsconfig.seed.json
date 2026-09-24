@@ -1,0 +1,7 @@
+{
+  // Chep tu api-backend (commit f2f36e1f): noEmit + rootDir "." nen duoc phep doc prisma/**
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "rootDir": "." },
+  "include": ["prisma/**/*.ts", "src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -44,3 +44,11 @@ jobs:
       - name: F. Ket qua buoc B
         shell: bash
         run: echo "buoc B outcome=${{ steps.giua.outcome }}"
+      - name: G. Bash 4+ tren ca ba?
+        shell: bash
+        continue-on-error: true
+        run: |
+          ten="GitHub"
+          echo "chu thuong: ${ten,,}"
+          declare -A m=([a]=1)
+          echo "mang ket hop: ${m[a]}"

@@ -33,10 +33,10 @@ jobs:
           export XUAT=co
           echo "GHI=co" >> "$GITHUB_ENV"
           cd /tmp
-          echo "trong buoc 4: XUAT=[$XUAT] GHI=[$GHI] pwd=$(pwd)"
+          echo "trong buoc 4: XUAT=[$XUAT] GHI=[$GHI] thu muc: $PWD"
       - name: 5. Buoc sau thay gi
         run: |
-          echo "buoc 5: XUAT=[$XUAT] GHI=[$GHI] pwd=$(pwd)"
+          echo "buoc 5: XUAT=[$XUAT] GHI=[$GHI] thu muc: $PWD"
       - name: 6. Tom tat len trang run
         run: |
           echo "### ch02 buoc" >> "$GITHUB_STEP_SUMMARY"

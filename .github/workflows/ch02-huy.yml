@@ -1,0 +1,37 @@
+# Chuong 2 (bai 2.2 + 2.4): bam HUY giua chung — always() va !cancelled() khac nhau o day
+name: ch02 huy giua chung
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-huy.yml']
+  workflow_dispatch:
+jobs:
+  dai:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Viec dai 120s
+        run: sleep 120
+      - name: always()
+        if: always()
+        run: echo "always() - chay ca khi bi huy"
+      - name: "!cancelled()"
+        if: ${{ !cancelled() }}
+        run: echo "khong in neu bi huy"
+      - name: failure()
+        if: failure()
+        run: echo "failure() - co chay khi bi huy khong?"
+      - name: cancelled()
+        if: cancelled()
+        run: echo "cancelled() - chi chay khi bi huy"
+  sau-always:
+    needs: dai
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "job sau, always() - dai = ${{ needs.dai.result }}"
+  sau-chua-huy:
+    needs: dai
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "job sau, !cancelled()"

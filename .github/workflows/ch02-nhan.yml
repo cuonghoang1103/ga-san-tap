@@ -1,0 +1,30 @@
+# Chuong 2 (bai 2.1): nhan runs-on — ubuntu-slim (1 CPU) va mot nhan GO SAI
+name: ch02 nhan runs-on
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-nhan.yml']
+  workflow_dispatch:
+jobs:
+  slim:
+    runs-on: ubuntu-slim
+    steps:
+      - run: |
+          echo "image: $ImageOS $ImageVersion"
+          echo "CPU: $(nproc) · RAM: $(free -h | awk '/Mem/{print $2}') · dia /: $(df -h / | awk 'NR==2{print $2}')"
+          echo "ao hoa: $(systemd-detect-virt 2>/dev/null || echo '?') · /.dockerenv: $(test -f /.dockerenv && echo co || echo khong)"
+          echo "docker: $(command -v docker || echo 'khong co')"
+          echo "may bat tu: $(uptime -s)"
+  chuan:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "image: $ImageOS $ImageVersion"
+          echo "CPU: $(nproc) · RAM: $(free -h | awk '/Mem/{print $2}') · dia /: $(df -h / | awk 'NR==2{print $2}')"
+          echo "ao hoa: $(systemd-detect-virt 2>/dev/null || echo '?') · /.dockerenv: $(test -f /.dockerenv && echo co || echo khong)"
+          echo "docker: $(command -v docker || echo 'khong co')"
+  go-sai:
+    runs-on: ubuntu-lastest
+    timeout-minutes: 5
+    steps:
+      - run: echo "khong bao gio toi day"

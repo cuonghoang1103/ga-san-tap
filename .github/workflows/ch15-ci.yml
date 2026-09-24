@@ -1,0 +1,107 @@
+# Chuong 15 · bai 15.1 — CI cho pull request cua app "Dat lich phong kham" (ch15/app).
+# lint + typecheck + test (Postgres THAT qua service container, ma tran Node 22/24), cache npm,
+# concurrency huy run cu cua CUNG PR, va MOT check tong hop "ci-ok" de dat lam required check.
+# Duoc goi lai tu ch15-cd.yml (workflow_call) de CD khong bao gio deploy thu CI chua xanh.
+name: ch15 · CI
+on:
+  pull_request:
+    branches: [ch15-capstone]
+    paths: ['ch15/app/**', '.github/workflows/ch15-ci.yml']
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ch15-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ch15/app
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ch15/app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+
+  typecheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ch15/app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci-khong-phai-mat-khau-that
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgres://postgres:ci-khong-phai-mat-khau-that@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: ch15/app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+
+  # CO Y viet SAI de so sanh (bai 15.1): khong co if: always() => khi mot job truoc do, job nay bi SKIP,
+  # va mot required check bi skip duoc GitHub tinh la DAT.
+  tong-hop-ngay-tho:
+    needs: [lint, typecheck, test]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "moi job truoc deu xanh"
+        working-directory: .
+
+  # Check tong hop DUNG: luon chay, tu doc ket qua tung job.
+  ci-ok:
+    if: always()
+    needs: [lint, typecheck, test]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Doc ket qua cac job
+        working-directory: .
+        env:
+          KQ: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "ket qua: $KQ"
+          for r in $KQ; do
+            if [ "$r" != "success" ]; then
+              echo "::error title=CI chua xanh::co job ket thuc voi '$r' (lint typecheck test = $KQ)"
+              exit 1
+            fi
+          done
+          echo "ci-ok: tat ca xanh"

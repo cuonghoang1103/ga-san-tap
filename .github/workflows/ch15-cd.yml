@@ -1,0 +1,204 @@
+# Chuong 15 · bai 15.2 + 15.3 — CD cua app "Dat lich phong kham".
+#   ci (goi lai ch15-ci.yml) -> anh (buildx da nen tang, cache gha, tag SHA + semver, day GHCR, attestation)
+#   -> trien-khai (environment ch15-production, concurrency khoa production, deploy qua SSH, smoke test, TU quay lui).
+# "VPS" la mot container SSH NGAY TRONG job (ch15/deploy) — KHONG SSH ra may that nao.
+name: ch15 · CD
+on:
+  push:
+    branches: [ch15-capstone]
+    paths: ['ch15/**', '.github/workflows/ch15-ci.yml', '.github/workflows/ch15-cd.yml']
+
+permissions:
+  contents: read
+
+env:
+  ANH_GOC: ghcr.io/cuonghoang1103/ch15-phong-kham
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ch15-ci.yml
+
+  anh:
+    needs: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write          # day anh len GHCR bang GITHUB_TOKEN
+      id-token: write          # xin chung chi Sigstore de ky attestation
+      attestations: write      # luu attestation vao kho
+      artifact-metadata: write # ban ghi luu tru cua artifact (actions/attest v4)
+    outputs:
+      anh: ${{ steps.ten.outputs.anh }}
+      digest: ${{ steps.dung.outputs.digest }}
+      phien-ban: ${{ steps.ten.outputs.phien-ban }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Doc phien ban tu package.json
+        id: ten
+        run: |
+          V=$(node -p "require('./ch15/app/package.json').version")
+          echo "phien-ban=$V" >> "$GITHUB_OUTPUT"
+          echo "mm=${V%.*}" >> "$GITHUB_OUTPUT"
+          echo "anh=${ANH_GOC}:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "phien ban $V · anh se deploy: ${ANH_GOC}:sha-${GITHUB_SHA::7}"
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tinh tag va nhan
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.ANH_GOC }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=v${{ steps.ten.outputs.phien-ban }}
+            type=raw,value=v${{ steps.ten.outputs.mm }}
+      - name: Dung va day (amd64 + arm64)
+        id: dung
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ch15/app
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: APP_VERSION=${{ steps.ten.outputs.phien-ban }}+${{ github.sha }}
+          cache-from: type=gha,scope=ch15-phong-kham
+          cache-to: type=gha,scope=ch15-phong-kham,mode=max
+          provenance: false
+          sbom: false
+      - name: Ky attestation nguon goc (SLSA provenance)
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.ANH_GOC }}
+          subject-digest: ${{ steps.dung.outputs.digest }}
+          push-to-registry: true
+      - name: Kiem lai tu phia nguoi dung anh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ steps.dung.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect "${ANH_GOC}@${DIGEST}" | head -20
+          gh attestation verify "oci://${ANH_GOC}@${DIGEST}" --repo "$GITHUB_REPOSITORY"
+
+  trien-khai:
+    needs: anh
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: ch15-production
+      url: http://localhost:19153/healthz
+    concurrency:
+      group: ch15-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+      deployments: read
+    env:
+      ANH: ${{ needs.anh.outputs.anh }}
+      PHIEN_BAN: ${{ needs.anh.outputs.phien-ban }}
+      GH_TOKEN: ${{ github.token }}
+      SSH_KEY: ${{ secrets.CH15_SSH_KEY }}
+      DB_PASSWORD: ${{ secrets.CH15_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Chuan bi khoa SSH va mat khau DB
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          if [ -n "$SSH_KEY" ]; then
+            printf '%s\n' "$SSH_KEY" > ~/.ssh/vps && echo "khoa SSH: lay tu environment secret CH15_SSH_KEY"
+          else
+            ssh-keygen -q -t ed25519 -N '' -C ch15-tam -f ~/.ssh/vps
+            echo "::notice title=Khoa SSH tam::environment ch15-production chua co secret CH15_SSH_KEY — sinh khoa tam cho lan chay nay"
+          fi
+          chmod 600 ~/.ssh/vps
+          if [ -z "$DB_PASSWORD" ]; then
+            DB_PASSWORD=$(openssl rand -hex 16)
+            echo "::add-mask::$DB_PASSWORD"
+            echo "DB_PASSWORD=$DB_PASSWORD" >> "$GITHUB_ENV"
+          fi
+      - name: "MO PHONG: dung 'VPS' (container sshd trong job)"
+        run: |
+          docker build -q -t ch15-vps ch15/deploy
+          docker run -d --name ch15-vps -p 19152:22 \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -e AUTHORIZED_KEY="$(ssh-keygen -y -f ~/.ssh/vps)" ch15-vps
+          for i in $(seq 1 20); do ssh-keyscan -p 19152 127.0.0.1 2>/dev/null | grep -q ed25519 && break; sleep 0.5; done
+          # Ghim khoa may chu (known_hosts) — KHONG dung StrictHostKeyChecking=no
+          ssh-keyscan -t ed25519 -p 19152 127.0.0.1 2>/dev/null > ~/.ssh/known_hosts
+          ssh-keygen -lf ~/.ssh/known_hosts
+          printf 'Host vps\n  HostName 127.0.0.1\n  Port 19152\n  User deployer\n  IdentityFile ~/.ssh/vps\n  StrictHostKeyChecking yes\n' > ~/.ssh/config
+          ssh vps 'echo "da vao $(hostname) voi user $(whoami)"; docker version --format "docker {{.Server.Version}}"'
+      - name: Hoi production DANG CHAY ban nao (Deployments API)
+        run: |
+          # Lan deploy THANH CONG gan nhat cua environment nay = ban dang chay = dich de quay lui.
+          PREV_SHA=""
+          for id in $(gh api "repos/${GITHUB_REPOSITORY}/deployments?environment=ch15-production&per_page=30" --jq '.[].id'); do
+            st=$(gh api "repos/${GITHUB_REPOSITORY}/deployments/${id}/statuses?per_page=1" --jq '.[0].state // ""')
+            if [ "$st" = "success" ]; then
+              PREV_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/deployments/${id}" --jq .sha); break
+            fi
+          done
+          if [ -n "$PREV_SHA" ]; then
+            PREV="${ANH_GOC}:sha-${PREV_SHA::7}"
+            echo "production dang chay: $PREV (deployment $id)"
+          else
+            PREV=""; echo "chua co lan deploy thanh cong nao — lan dau, khong co dich quay lui"
+          fi
+          echo "PREV=$PREV" >> "$GITHUB_ENV"
+      - name: Dang nhap GHCR tren VPS (token song den het job)
+        run: printf '%s\n' "$GH_TOKEN" | ssh vps "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin" 2>&1 | tail -1
+      - name: "MO PHONG: dua VPS ve trang thai production hien tai"
+        if: env.PREV != ''
+        run: printf '%s\n' "$DB_PASSWORD" | ssh vps "read -r DB_PASSWORD && export DB_PASSWORD && /srv/phong-kham/trien-khai.sh '$PREV'"
+      - name: Deploy qua SSH
+        run: |
+          echo "BAT_DAU=$(date +%s)" >> "$GITHUB_ENV"
+          printf '%s\n' "$DB_PASSWORD" | ssh vps "read -r DB_PASSWORD && export DB_PASSWORD && /srv/phong-kham/trien-khai.sh '$ANH'"
+      - name: Smoke test (di duong nguoi dung di)
+        id: smoke
+        run: |
+          for i in $(seq 1 15); do
+            if R=$(curl -fsS --max-time 2 http://localhost:19153/healthz); then
+              echo "lan $i: $R"
+              case "$R" in *"\"phienBan\":\"${PHIEN_BAN}+${GITHUB_SHA}\""*) ;; *) echo "::error::sai phien ban"; exit 1;; esac
+              curl -fsS --max-time 2 -o /dev/null -w "GET /api/lich -> %{http_code}\n" http://localhost:19153/api/lich
+              curl -fsS --max-time 2 -o /dev/null -w "GET / -> %{http_code}\n" http://localhost:19153/
+              exit 0
+            fi
+            echo "lan $i: chua tra loi (container: $(docker inspect -f '{{.State.Status}} restart={{.RestartCount}} exit={{.State.ExitCode}}' ch15-app))"
+            sleep 2
+          done
+          echo "--- 5 dong log cuoi cua container ---"; docker logs ch15-app 2>&1 | tail -5
+          exit 1
+      - name: TU quay lui ve ban truoc
+        if: failure() && steps.smoke.outcome == 'failure' && env.PREV != ''
+        run: |
+          echo "quay lui: $ANH -> $PREV"
+          printf '%s\n' "$DB_PASSWORD" | ssh vps "read -r DB_PASSWORD && export DB_PASSWORD && /srv/phong-kham/trien-khai.sh '$PREV'"
+          for i in $(seq 1 15); do
+            curl -fsS --max-time 2 http://localhost:19153/healthz && { echo; echo "quay lui XONG sau lan $i"; exit 0; }
+            sleep 2
+          done
+          echo "::error::quay lui cung khong len — can nguoi vao xem"; exit 1
+      - name: Tom tat deploy
+        if: always()
+        run: |
+          DANG_CHAY=$(docker inspect -f '{{.Config.Image}}' ch15-app 2>/dev/null || echo khong-co)
+          {
+            echo "### Deploy ch15-production"
+            echo "| | |"; echo "|---|---|"
+            echo "| Commit | \`${GITHUB_SHA::7}\` (v${PHIEN_BAN}) |"
+            echo "| Anh muon trao | \`${ANH}\` |"
+            echo "| Ban truoc (dich quay lui) | \`${PREV:-khong co}\` |"
+            echo "| Smoke test | ${{ steps.smoke.outcome }} |"
+            echo "| Production dang chay | \`${DANG_CHAY}\` |"
+            echo "| Thoi gian tu luc deploy | $(( $(date +%s) - ${BAT_DAU:-$(date +%s)} )) s |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"

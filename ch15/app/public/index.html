@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>Dat lich phong kham</title></head>
+<body>
+<h1>Đặt lịch phòng khám</h1>
+<form id="f">
+  <input name="bacSi" placeholder="Bác sĩ" required>
+  <input name="benhNhan" placeholder="Bệnh nhân" required>
+  <input name="batDau" type="datetime-local" required>
+  <button>Đặt lịch</button>
+</form>
+<ul id="ds"></ul>
+<script>
+async function tai() {
+  const r = await fetch('/api/lich');
+  document.getElementById('ds').innerHTML = (await r.json())
+    .map((l) => '<li>' + l.batDau + ' — ' + l.bacSi + ' — ' + l.benhNhan + '</li>').join('');
+}
+document.getElementById('f').onsubmit = async (e) => {
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(e.target));
+  d.batDau = new Date(d.batDau + 'Z').toISOString();
+  const r = await fetch('/api/lich', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(d) });
+  if (!r.ok) alert(JSON.stringify(await r.json()));
+  tai();
+};
+tai();
+</script>
+</body>
+</html>

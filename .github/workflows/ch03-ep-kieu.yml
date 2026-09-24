@@ -76,5 +76,9 @@ jobs:
           H18: ${{ hashFiles('ch03/khong-co/**') }}
           H19: ${{ format('cache-{0}-{1}', runner.os, hashFiles('ch03/khong-co/**')) }}
           H20: ${{ join(github.event.commits.*.author.name, ', ') }}
+          H21: ${{ case(true, '', 'X') }}
+          H22: ${{ true && '' || 'X' }}
+          H23: ${{ hashFiles('ch03/*.txt') }}
+          H24: ${{ case(false, 'a', 'mac-dinh') }}
         run: |
-          for i in $(seq -w 1 20); do v="H$i"; printf '%s = [%s]\n' "$v" "${!v}"; done
+          for i in $(seq -w 1 24); do v="H$i"; printf '%s = [%s]\n' "$v" "${!v}"; done

@@ -1,0 +1,14 @@
+name: ch00 — het gio
+on:
+  push:
+    branches: [ch00-mo-dau]
+    paths: ['.github/workflows/ch00-het-gio.yml']
+jobs:
+  treo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - name: Mot buoc treo (gia lap cho nhap lieu)
+        run: |
+          echo "bat dau luc $(date -u +%T)"
+          sleep 300

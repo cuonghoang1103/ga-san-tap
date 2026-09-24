@@ -1,0 +1,26 @@
+name: ch00 — ba he dieu hanh
+on:
+  push:
+    branches: [ch00-mo-dau]
+    paths: ['.github/workflows/ch00-ba-may.yml']
+jobs:
+  do:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: May nay co gi
+        shell: bash
+        run: |
+          echo "os=$RUNNER_OS arch=$RUNNER_ARCH image=$ImageOS $ImageVersion"
+          node --version; npm --version
+          echo "CPU: $(getconf _NPROCESSORS_ONLN 2>/dev/null || echo $NUMBER_OF_PROCESSORS)"
+      - name: Cai mot goi that (do thoi gian)
+        shell: bash
+        run: |
+          mkdir t && cd t && npm init -y >/dev/null
+          start=$(date +%s); npm install --no-audit --no-fund express@4 >/dev/null; end=$(date +%s)
+          echo "npm install express@4: $((end-start)) giay"

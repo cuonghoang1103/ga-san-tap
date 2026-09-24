@@ -1,0 +1,19 @@
+name: ch00 — may khac, khong phai may ban
+on:
+  push:
+    branches: [ch00-mo-dau]
+    paths: ['ch00/**', '.github/workflows/ch00-may-khac.yml']
+jobs:
+  kiem:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cai may nay la cai gi
+        run: |
+          echo "CI=$CI  GITHUB_ACTIONS=$GITHUB_ACTIONS"
+          echo "runner: $RUNNER_OS $RUNNER_ARCH  ($ImageOS $ImageVersion)"
+          nproc; free -h | head -2; node --version
+          ls -la ch00
+      - name: Chay app giong het tren may nha
+        run: node ch00/app.js

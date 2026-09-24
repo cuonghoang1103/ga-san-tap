@@ -1,0 +1,25 @@
+name: ch00 — ong nuot ma thoat
+on:
+  push:
+    branches: [ch00-mo-dau]
+    paths: ['.github/workflows/ch00-ong-nuot-loi.yml']
+jobs:
+  mac-dinh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: "Khong khai shell: — lenh hong o GIUA ong"
+        run: |
+          echo "shell dang dung: $0 $-"
+          false | tail -1
+          echo "van chay toi day — buoc XANH"
+  khai-bash:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: "Khai shell: bash — cung lenh do"
+        shell: bash
+        run: |
+          echo "shell dang dung: $0 $-"
+          false | tail -1
+          echo "khong bao gio in dong nay"

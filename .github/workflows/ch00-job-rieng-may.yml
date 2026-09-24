@@ -1,0 +1,40 @@
+name: ch00 — job khong chia se gi
+on:
+  push:
+    branches: [ch00-mo-dau]
+    paths: ['.github/workflows/ch00-job-rieng-may.yml']
+jobs:
+  dung:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Tao mot tep
+        run: |
+          mkdir -p dist && echo "ban dung luc $(date -u +%T)" > dist/ket-qua.txt
+          echo "may: $(hostname)"; ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ket-qua
+          path: dist/
+  doc-khong-mang:
+    needs: dung
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Doc tep ma KHONG tai artifact
+        run: |
+          echo "may: $(hostname)"
+          cat dist/ket-qua.txt
+  doc-co-mang:
+    needs: dung
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ket-qua
+          path: dist/
+      - name: Doc tep SAU khi tai artifact
+        run: |
+          echo "may: $(hostname)"
+          cat dist/ket-qua.txt

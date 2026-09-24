@@ -1,0 +1,61 @@
+# Chương 5 · bài 5.3 — cache chết, cache luôn trượt, và câu hỏi "cache .tsbuildinfo có đáng không" — đo thật.
+name: ch05 · cache chet
+on:
+  push:
+    branches: [ch05-cache]
+    paths: ['.github/workflows/ch05-chet.yml', 'ch05/app/src/**', 'ch05/app/tsconfig.json']
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: ch05/app
+jobs:
+  cache-chet:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch05/app/package-lock.json }
+      - name: Chep y het buoc cache cua backend api-backend
+        uses: actions/cache@v5
+        with:
+          path: ch05/app/node_modules/.cache
+          key: ch05-chet-${{ runner.os }}-lock-${{ hashFiles('ch05/app/package-lock.json') }}
+          restore-keys: ch05-chet-${{ runner.os }}-lock-
+      - run: npm ci --no-audit --no-fund 2>&1 | tail -1
+      - run: npm run build 2>&1 | tail -1; ls node_modules/.cache 2>&1 || true
+
+  luon-truot:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: mkdir -p lt && date > lt/x
+        working-directory: .
+      - name: Khoa chua github.sha + run_id — doi MOI lan
+        uses: actions/cache@v5
+        with: { path: lt, key: 'ch05-luon-truot-${{ github.sha }}-${{ github.run_id }}' }
+
+  tsc-tang-dan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch05/app/package-lock.json }
+      - run: npm ci --no-audit --no-fund 2>&1 | tail -1
+      - name: tsc LANH (xoa sach .tsbuildinfo + dist)
+        run: |
+          rm -rf dist .tsbuildinfo
+          echo "so file .ts: $(ls src | wc -l)"
+          /usr/bin/time -f "tsc lanh: %e giay" npx tsc -p .
+      - name: Khoi phuc .tsbuildinfo + dist
+        id: tb
+        uses: actions/cache@v5
+        with:
+          path: |
+            ch05/app/.tsbuildinfo
+            ch05/app/dist
+          key: ch05-tsb-${{ runner.os }}-${{ hashFiles('ch05/app/src/**', 'ch05/app/tsconfig.json') }}
+          restore-keys: ch05-tsb-${{ runner.os }}-
+      - name: tsc sau khi khoi phuc
+        run: |
+          echo "cache-hit=${{ steps.tb.outputs.cache-hit }}"
+          ls -la .tsbuildinfo 2>&1 | tail -1
+          /usr/bin/time -f "tsc am: %e giay" npx tsc -p .

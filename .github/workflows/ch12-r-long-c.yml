@@ -1,0 +1,20 @@
+name: ch12-r-long-c
+on:
+  workflow_call:
+    secrets:
+      chi-mot-cai:
+        required: false
+jobs:
+  c-nhin:
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          S: ${{ toJSON(secrets) }}
+          THU_CH06: ${{ secrets.CH06_GIA }}
+        run: |
+          echo "tang C · github.workflow     = ${{ github.workflow }}"
+          echo "tang C · github.workflow_ref = ${{ github.workflow_ref }}"
+          echo "tang C · github.job          = ${{ github.job }}"
+          echo "tang C · ten cac secret nhan duoc:"
+          jq -c 'keys' <<<"$S"
+          echo "tang C · secrets.CH06_GIA truc tiep: do dai = ${#THU_CH06}"

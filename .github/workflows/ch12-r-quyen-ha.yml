@@ -1,0 +1,10 @@
+name: ch12-r-quyen-ha
+on:
+  workflow_call:
+jobs:
+  ha:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - run: echo "job nay tu ha xuong contents:read — xem Set up job"

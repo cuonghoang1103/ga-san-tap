@@ -1,0 +1,47 @@
+# Composite action — Chương 12, bài 12.2. Gom "cài Node + cài phụ thuộc + báo cáo" thành MỘT bước.
+name: ch12 chuan bi
+description: Cai Node, cai phu thuoc (tuy chon), chay mot buoc duoc phep hong, bao cao
+inputs:
+  node-version:
+    description: Phien ban Node
+    default: '22'
+  thu-muc:
+    description: Thu muc co package-lock.json
+    default: '.'
+  bo-qua-cai:
+    description: "'true' de bo qua npm ci"
+    default: 'false'
+outputs:
+  node:
+    description: node -v sau khi cai
+    value: ${{ steps.kq.outputs.node }}
+  so-goi:
+    description: so goi trong node_modules
+    value: ${{ steps.kq.outputs.so-goi }}
+runs:
+  using: composite
+  steps:
+    - name: Cai Node (mot action long trong composite)
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+    - name: Cai phu thuoc
+      if: inputs.bo-qua-cai != 'true'
+      shell: bash
+      working-directory: ${{ inputs.thu-muc }}
+      run: npm ci --no-audit --no-fund
+    - name: Buoc duoc phep hong
+      continue-on-error: true
+      shell: bash
+      run: |
+        echo "buoc nay thoat ma 3"
+        exit 3
+    - name: Goi script nam canh action.yml
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/bao-cao.sh"
+    - id: kq
+      shell: bash
+      working-directory: ${{ inputs.thu-muc }}
+      run: |
+        echo "node=$(node -v)" >> "$GITHUB_OUTPUT"
+        echo "so-goi=$(ls node_modules 2>/dev/null | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"

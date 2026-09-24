@@ -1,0 +1,24 @@
+# Chương 12, bài 12.4: merge key "<<:" — docs KHÔNG nhắc tới. Đo xem GitHub có nhận không.
+name: ch12-neo-gop
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-neo-gop.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  goc:
+    runs-on: ubuntu-24.04
+    env: &env-goc
+      NODE_ENV: test
+      TZ: Asia/Ho_Chi_Minh
+    steps:
+      - run: echo "goc NODE_ENV=$NODE_ENV TZ=$TZ"
+  bien-the:
+    runs-on: ubuntu-24.04
+    env:
+      <<: *env-goc
+      NODE_ENV: production
+    steps:
+      - run: echo "bien-the NODE_ENV=$NODE_ENV TZ=$TZ"

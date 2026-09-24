@@ -1,0 +1,13 @@
+# Chuỗi lồng A -> B -> C — Chương 12, bài 12.1: secret đi qua từng tầng ra sao, github.* ở tầng sâu nhất là của ai.
+name: ch12-long
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-long.yml', '.github/workflows/ch12-r-long-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  a:
+    uses: ./.github/workflows/ch12-r-long-b.yml
+    secrets: inherit

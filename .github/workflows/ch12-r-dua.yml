@@ -1,0 +1,14 @@
+name: ch12-r-dua
+on:
+  workflow_call:
+jobs:
+  ben-trong:
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}
+      cancel-in-progress: true
+    steps:
+      - run: |
+          echo "github.workflow o day = ${{ github.workflow }}"
+          sleep 20
+          echo "chay xong"

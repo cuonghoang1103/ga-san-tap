@@ -1,0 +1,24 @@
+# CỐ Ý ĐỎ — Chương 12, bài 12.2: hai lỗi composite hay gặp.
+name: ch12-composite-do
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-composite-do.yml', '.github/actions/ch12-thieu-shell/**', '.github/actions/ch12-doc-secret/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  thieu-shell:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/ch12-thieu-shell
+  doc-secret:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/ch12-doc-secret

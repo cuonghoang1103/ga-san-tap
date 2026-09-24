@@ -1,0 +1,15 @@
+# Quyền đi xuống — Chương 12, bài 12.1: workflow được gọi HẠ quyền được (xem khối "GITHUB_TOKEN Permissions" ở Set up job).
+name: ch12-quyen-ha
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-quyen-ha.yml', '.github/workflows/ch12-r-quyen-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  goi-ha:
+    uses: ./.github/workflows/ch12-r-quyen-ha.yml
+  goi-khong-khai:
+    uses: ./.github/workflows/ch12-r-quyen-khong-khai.yml

@@ -1,0 +1,12 @@
+# CỐ Ý ĐỎ — Chương 12, bài 12.1: workflow được gọi xin NÂNG quyền (contents: write) trong khi bên gọi chỉ cho read.
+name: ch12-quyen-nang
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-quyen-nang.yml', '.github/workflows/ch12-r-quyen-nang.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  goi-nang:
+    uses: ./.github/workflows/ch12-r-quyen-nang.yml

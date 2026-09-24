@@ -1,0 +1,15 @@
+# CỐ Ý ĐỎ — Chương 12, bài 12.1: cùng một concurrency group ở bên gọi VÀ bên được gọi (docs cảnh báo điều này).
+name: ch12-dua
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-dua.yml', '.github/workflows/ch12-r-dua.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  goi:
+    concurrency:
+      group: ${{ github.workflow }}
+      cancel-in-progress: true
+    uses: ./.github/workflows/ch12-r-dua.yml

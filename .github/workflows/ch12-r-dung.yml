@@ -1,0 +1,60 @@
+# Reusable workflow (workflow được gọi) — Chương 12, bài 12.1.
+# Nhận 3 input đủ ba kiểu, 1 secret bắt buộc, trả 2 output. Không có on: push — chỉ chạy khi được GỌI.
+name: ch12-r-dung
+on:
+  workflow_call:
+    inputs:
+      moi-truong:
+        description: dev | stage | prod
+        type: string
+        required: true
+      cho-giay:
+        description: ngu bao nhieu giay (de co thu tu hoan thanh khac nhau trong ma tran)
+        type: number
+        default: 1
+      chay-test:
+        type: boolean
+        default: true
+    secrets:
+      ma-thu:
+        description: gia tri gia de xem secret di vao workflow duoc goi ra sao
+        required: true
+    outputs:
+      ban-dung:
+        description: ten ban dung
+        value: ${{ jobs.dung.outputs.ban }}
+      moi-truong:
+        value: ${{ jobs.dung.outputs.mt }}
+
+jobs:
+  dung:
+    runs-on: ubuntu-24.04
+    outputs:
+      ban: ${{ steps.b.outputs.ban }}
+      mt: ${{ steps.b.outputs.mt }}
+    steps:
+      - name: Nhin tu ben trong workflow duoc goi
+        env:
+          MA: ${{ secrets.ma-thu }}
+          MOI_TRUONG: ${{ inputs.moi-truong }}
+          KIEU_SO: ${{ inputs.cho-giay }}
+          KIEU_BOOL: ${{ inputs.chay-test }}
+        run: |
+          echo "github.workflow     = ${{ github.workflow }}"
+          echo "github.workflow_ref = ${{ github.workflow_ref }}"
+          echo "github.job          = ${{ github.job }}"
+          echo "github.event_name   = ${{ github.event_name }}"
+          echo "inputs: moi-truong=$MOI_TRUONG cho-giay=$KIEU_SO chay-test=$KIEU_BOOL"
+          echo "chay-test la boolean that: ${{ inputs.chay-test == true }}"
+          echo "TU_BEN_GOI (env muc workflow cua ben goi) = '${TU_BEN_GOI:-<rong>}'"
+          echo "do dai ma-thu = ${#MA}"
+          echo "in thang ma-thu: $MA"
+      - name: Cho ${{ inputs.cho-giay }} giay
+        run: sleep ${{ inputs.cho-giay }}
+      - id: b
+        env:
+          MOI_TRUONG: ${{ inputs.moi-truong }}
+        run: |
+          echo "ban=1.4.${{ github.run_number }}-$MOI_TRUONG" >> "$GITHUB_OUTPUT"
+          echo "mt=$MOI_TRUONG" >> "$GITHUB_OUTPUT"
+          echo "xong $MOI_TRUONG luc $(date -u +%H:%M:%S)"

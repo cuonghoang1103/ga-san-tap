@@ -1,0 +1,8 @@
+name: ch12-r-quyen-khong-khai
+on:
+  workflow_call:
+jobs:
+  khong-khai:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "job nay khong khai permissions — nhan dung quyen cua ben goi"

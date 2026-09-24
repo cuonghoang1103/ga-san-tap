@@ -1,0 +1,10 @@
+# CỐ Ý SAI — composite cố đọc context secrets
+name: ch12 doc secret
+description: Minh hoa composite khong co context secrets
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        S: ${{ secrets.CH06_GIA }}
+      run: echo "do dai = ${#S}"

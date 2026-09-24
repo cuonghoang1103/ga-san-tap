@@ -1,0 +1,7 @@
+# CỐ Ý SAI — composite có run: mà không có shell:
+name: ch12 thieu shell
+description: Minh hoa loi thieu shell
+runs:
+  using: composite
+  steps:
+    - run: echo "khong co shell"

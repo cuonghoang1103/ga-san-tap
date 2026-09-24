@@ -1,0 +1,25 @@
+# YAML anchor & alias — Chương 12, bài 12.4: cách tái sử dụng NHỎ NHẤT, ngay trong một tệp.
+name: ch12-neo
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-neo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    env: &env-chung
+      NODE_ENV: test
+      TZ: Asia/Ho_Chi_Minh
+    steps: &buoc-chung
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: In moi truong
+        run: echo "job=${{ github.job }} NODE_ENV=$NODE_ENV TZ=$TZ gio=$(date +%H:%M_%Z)"
+  test:
+    runs-on: ubuntu-24.04
+    env: *env-chung
+    steps: *buoc-chung

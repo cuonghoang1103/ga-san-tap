@@ -1,0 +1,59 @@
+# Bên GỌI — Chương 12, bài 12.1: gọi một lần, gọi bằng ma trận, đọc output, truyền secret tường minh / chuỗi thường.
+name: ch12-goi
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-goi.yml', '.github/workflows/ch12-r-dung.yml']
+  workflow_dispatch:
+
+env:
+  TU_BEN_GOI: co-gia-tri-o-ben-goi
+
+permissions:
+  contents: read
+
+jobs:
+  mot-lan:
+    uses: ./.github/workflows/ch12-r-dung.yml
+    with:
+      moi-truong: dev
+      cho-giay: 2
+    secrets:
+      ma-thu: ${{ secrets.CH06_GIA }}
+
+  chuoi-thuong:
+    uses: ./.github/workflows/ch12-r-dung.yml
+    with:
+      moi-truong: literal
+      chay-test: false
+    secrets:
+      ma-thu: gia-tri-thu-khong-that-123
+
+  ma-tran:
+    strategy:
+      matrix:
+        include:
+          - { mt: dev, cho: 1 }
+          - { mt: stage, cho: 25 }
+          - { mt: prod, cho: 8 }
+    uses: ./.github/workflows/ch12-r-dung.yml
+    with:
+      moi-truong: ${{ matrix.mt }}
+      cho-giay: ${{ matrix.cho }}
+    secrets:
+      ma-thu: ${{ secrets.CH06_GIA }}
+
+  doc-ket-qua:
+    needs: [mot-lan, ma-tran]
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          A: ${{ needs.mot-lan.outputs.ban-dung }}
+          B: ${{ needs.ma-tran.outputs.moi-truong }}
+          C: ${{ needs.ma-tran.outputs.ban-dung }}
+          KQ: ${{ needs.ma-tran.result }}
+        run: |
+          echo "mot-lan.ban-dung   = $A"
+          echo "ma-tran.result     = $KQ"
+          echo "ma-tran.moi-truong = $B   (3 lan chay, output chi con MOT)"
+          echo "ma-tran.ban-dung   = $C"

@@ -1,0 +1,44 @@
+# Composite action — Chương 12, bài 12.2: gọi cục bộ, so thời gian với bản viết thẳng các bước.
+name: ch12-composite
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-composite.yml', '.github/actions/ch12-chuan-bi/**', 'ch12/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cuc-bo:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: cb
+        uses: ./.github/actions/ch12-chuan-bi
+        with:
+          node-version: '24'
+          thu-muc: ch12/app
+      - env:
+          NODE_V: ${{ steps.cb.outputs.node }}
+          SO_GOI: ${{ steps.cb.outputs.so-goi }}
+          KQ: ${{ steps.cb.outcome }}
+        run: |
+          echo "output node   = $NODE_V"
+          echo "output so-goi = $SO_GOI"
+          echo "outcome cua ca composite = $KQ"
+  viet-thang:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - working-directory: ch12/app
+        run: npm ci --no-audit --no-fund
+      - continue-on-error: true
+        run: exit 3
+      - working-directory: ch12/app
+        run: echo "node=$(node -v) so-goi=$(ls node_modules | wc -l)"

@@ -1,0 +1,17 @@
+name: ch12-r-long-b
+on:
+  workflow_call:
+jobs:
+  b-nhin:
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          S: ${{ toJSON(secrets) }}
+        run: |
+          echo "tang B · github.workflow = ${{ github.workflow }}"
+          echo "tang B · ten cac secret nhan duoc (inherit):"
+          jq -c 'keys' <<<"$S"
+  b-goi-c:
+    uses: ./.github/workflows/ch12-r-long-c.yml
+    secrets:
+      chi-mot-cai: ${{ secrets.CH06_GIA }}

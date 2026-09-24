@@ -1,2 +1,2 @@
 const { calc } = require('../lib/calc');
-module.exports = () => calc(2, 3) === 5 || `calc(2,3) = ${calc(2, 3)}, mong doi 5`;
+module.exports = () => calc({ a: 2, b: 3 }) === 5 || `calc({a:2,b:3}) = ${calc({ a: 2, b: 3 })}, mong doi 5`;

@@ -1,0 +1,26 @@
+# Chương 7 · bài 7.4 — song song hoá: CÙNG ba việc của ch07-phuong-sai.yml, tách thành ba job chạy cùng lúc.
+# Đổi lại: mỗi job tự checkout + setup-node + npm ci ⇒ máy-giây TĂNG trong khi đồng hồ GIẢM.
+name: ch07 · tach job (ba job song song)
+on:
+  push:
+    branches: [ch07-toc-do]
+    paths: ['ch07/kich/tach-job']
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: ch07/app
+jobs:
+  viec:
+    name: ${{ matrix.viec }}
+    strategy:
+      fail-fast: false
+      matrix:
+        viec: [kiem, test, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch07/app/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - name: npm run ${{ matrix.viec }}
+        run: npm run ${{ matrix.viec }}

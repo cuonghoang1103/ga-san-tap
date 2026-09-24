@@ -1,0 +1,32 @@
+{
+  "name": "ch07-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Du an thu cho Chuong 7 (toc do, concurrency) — chep tu ch05/app",
+  "scripts": {
+    "kiem": "tsc --noEmit -p .",
+    "test": "node --test --test-concurrency=1",
+    "build": "tsc -p ."
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "@prisma/client": "^6.16.0",
+    "zod": "^3.25.0",
+    "axios": "^1.12.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "eslint": "^9.35.0",
+    "eslint-config-next": "^15.5.0",
+    "jest": "^30.1.0",
+    "ts-jest": "^29.4.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.0",
+    "@types/express": "^5.0.0",
+    "prisma": "^6.16.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

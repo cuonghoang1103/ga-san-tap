@@ -1,0 +1,31 @@
+# Chương 7 · bài 7.2 — concurrency, cancel-in-progress: false
+# run mới XẾP HÀNG sau run đang chạy — hợp với phát hành: không được bỏ dở. Mỗi nhóm chỉ giữ MỘT run chờ.
+# Thí nghiệm: đẩy 3 commit sửa ch07/kich/cc cách nhau ~15 giây; cả hai workflow cùng nhận 3 cú push.
+name: ch07 · cc xep (cancel-in-progress false)
+on:
+  push:
+    branches: [ch07-toc-do]
+    paths: ['ch07/kich/cc']
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  trien-khai-gia:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: 1 · bat dau
+        run: echo "commit ${GITHUB_SHA::7} () bat dau luc $(date -u +%T)"
+      - uses: actions/checkout@v5
+        with: { sparse-checkout: ch07/kich }
+      - name: 2 · day anh (gia lap 40 giay)
+        run: for i in $(seq 1 8); do sleep 5; echo "day anh ... $((i*5)) s  ($(date -u +%T))"; done
+      - name: 3 · chay migration (gia lap 40 giay)
+        run: for i in $(seq 1 8); do sleep 5; echo "migration ... $((i*5)) s  ($(date -u +%T))"; done
+      - name: 4 · don dep (if always)
+        if: always()
+        run: echo "job.status=${{ job.status }} · noi dung cc=$(cat ch07/kich/cc) · $(date -u +%T)"
+      - name: 5 · chi chay khi BI HUY (if cancelled)
+        if: cancelled()
+        run: echo "run nay bi huy giua chung luc $(date -u +%T) — buoc 2/3 co the da lam DO mot nua"

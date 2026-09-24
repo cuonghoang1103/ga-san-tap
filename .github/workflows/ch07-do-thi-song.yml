@@ -1,0 +1,61 @@
+# Chương 7 · bài 7.1 + 7.4 — đường tới hạn đo trên runner thật.
+# CÙNG khối việc, chỉ dời một cạnh needs: kiem không còn chặn bản dựng, cong-bo chờ cả hai.
+# Job cuối tự đọc đường tới hạn của CHÍNH lần chạy này qua API (ch07/duong-toi-han.mjs) và ghi vào Summary.
+name: ch07 · do thi — kiem chay SONG SONG
+on:
+  push:
+    branches: [ch07-toc-do]
+    paths: ['.github/workflows/ch07-do-thi-song.yml', 'ch07/kich/do-thi']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+defaults:
+  run:
+    working-directory: ch07/app
+jobs:
+  kiem:
+    name: Kiem tra ma
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch07/app/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - name: kiem kieu (tsc --noEmit)
+        run: npm run kiem
+      - name: test (6 nhom, CPU that)
+        run: npm test
+
+  dung:
+
+    name: Dung ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch07/app/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.os }}
+          path: ch07/app/dist
+
+  cong-bo:
+    needs: [kiem, dung]
+    name: Cong bo
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with: { sparse-checkout: ch07 }
+      - uses: actions/download-artifact@v8
+        with: { pattern: 'dist-*', path: ve }
+      - run: find ../../ve -maxdepth 1 -type d | sort
+      - name: duong toi han cua CHINH lan chay nay
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: node ../duong-toi-han.mjs "$GITHUB_RUN_ID"

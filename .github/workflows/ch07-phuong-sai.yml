@@ -1,0 +1,28 @@
+# Chương 7 · bài 7.3 + 7.4 — phương sai: CÙNG một workflow, CÙNG một commit, chạy lại 10 lần.
+# Một job làm tuần tự: cài → kiểm kiểu → test → dựng. Đo thời lượng lần chạy VÀ từng bước.
+name: ch07 · phuong sai (mot job noi tiep)
+on:
+  push:
+    branches: [ch07-toc-do]
+    paths: ['ch07/kich/phuong-sai']
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: ch07/app
+jobs:
+  mot-job:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch07/app/package-lock.json }
+      - run: npm ci --no-audit --no-fund
+      - name: kiem kieu
+        run: npm run kiem
+      - name: test
+        run: npm test
+      - name: dung
+        run: npm run build
+      - name: may nay la may nao
+        run: |
+          echo "cpu=$(nproc) · $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2) · runner ${RUNNER_NAME}"

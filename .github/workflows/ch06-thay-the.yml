@@ -1,0 +1,25 @@
+# Chuong 6.2 — khoi permissions: o muc JOB THAY THE khoi o muc workflow, KHONG cong them.
+name: ch06-thay-the
+on:
+  push:
+    branches: [ch06-bi-mat]
+    paths: ['.github/workflows/ch06-thay-the.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  ke-thua:
+    runs-on: ubuntu-24.04
+    env: { GH_TOKEN: '${{ github.token }}', R: '${{ github.repository }}' }
+    steps:
+      - run: |
+          gh api -X POST "repos/$R/statuses/$GITHUB_SHA" -f state=success -f context=ch06/ke-thua --jq '"ke-thua: HTTP 201 · \(.context)"' 2>&1 || echo "=> ma thoat $?"
+  thay-the:
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: read   # job NANG them issues... va mat statuses: write cua muc workflow
+    env: { GH_TOKEN: '${{ github.token }}', R: '${{ github.repository }}' }
+    steps:
+      - run: |
+          gh api -X POST "repos/$R/statuses/$GITHUB_SHA" -f state=success -f context=ch06/thay-the 2>&1 || echo "=> ma thoat $?"

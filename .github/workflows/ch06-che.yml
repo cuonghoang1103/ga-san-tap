@@ -1,0 +1,95 @@
+# Chuong 6.1 — che bi mat phu cai gi, khong phu cai gi. MOI gia tri o day la GIA.
+name: ch06-che
+on:
+  push:
+    branches: [ch06-bi-mat]
+    paths: ['.github/workflows/ch06-che.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  che:
+    runs-on: ubuntu-24.04
+    outputs:
+      bi-mat-ra-ngoai: ${{ steps.ra.outputs.gia-tri }}
+      binh-thuong: ${{ steps.ra.outputs.binh-thuong }}
+    env:
+      S: ${{ secrets.CH06_GIA }}
+    steps:
+      - name: 1. In thang, va long trong mot dong dai
+        run: |
+          echo "gia tri: $S"
+          echo "truoc-${S}-sau"
+      - name: 2. Noi suy thang vao run (xem tieu de nhom cua buoc)
+        run: |
+          echo "noi suy thang: ${{ secrets.CH06_GIA }}"
+      - name: 3. Nhung bien doi pho bien
+        run: |
+          echo "8 ky tu dau (kieu go loi):  ${S:0:8}"
+          echo "viet hoa:                   ${S^^}"
+          echo "base64 cua rieng no:        $(printf %s "$S" | base64)"
+          echo "base64 cua user:bi-mat:     $(printf %s "thu:$S" | base64)"
+          echo "ma URL (- thanh %2D):       ${S//-/%2D}"
+      - name: 4. Khoa luu dang base64, giai ma ra tep
+        env:
+          B64: ${{ secrets.CH06_KHOA_B64 }}
+        run: |
+          echo "ban base64 (thu GitHub biet): $B64"
+          echo "$B64" | base64 -d > khoa.txt
+          echo "--- cat khoa.txt (thu GitHub KHONG biet) ---"
+          cat khoa.txt
+      - name: 5. add-mask mot gia tri nhieu dong — sai cach roi dung cach
+        env:
+          B64: ${{ secrets.CH06_KHOA_B64 }}
+        run: |
+          KHOA=$(echo "$B64" | base64 -d)
+          echo "::add-mask::$KHOA"
+          echo "--- sau add-mask ca khoi, in lai ---"
+          echo "$KHOA"
+          while IFS= read -r dong; do [ -n "$dong" ] && echo "::add-mask::$dong"; done <<< "$KHOA"
+          echo "--- sau add-mask TUNG DONG, in lai ---"
+          echo "$KHOA"
+      - name: 6. Bi mat nhieu dong luu thang
+        env:
+          ND: ${{ secrets.CH06_NHIEU_DONG }}
+        run: |
+          echo "$ND"
+          echo "dong-mot-gia-khong-that dung mot minh"
+      - name: 7. Bi mat JSON — ca khoi va mot truong
+        env:
+          J: ${{ secrets.CH06_JSON }}
+        run: |
+          echo "ca khoi: $J"
+          echo "truong pass qua jq: $(echo "$J" | jq -r .pass)"
+          echo "truong user qua jq: $(echo "$J" | jq -r .user)"
+      - name: 8. Bi mat NGAN (8080) pha nat log
+        env:
+          N: ${{ secrets.CH06_NGAN }}
+        run: |
+          echo "cong web: 8080 · cong phu: 18080 · url: http://localhost:8080/api"
+          echo "nam 2026, ma don 80801"
+      - name: 9. Bi mat khong ton tai = chuoi rong
+        env:
+          K: ${{ secrets.KHONG_HE_CO }}
+        run: |
+          if [ -z "$K" ]; then echo "KHONG_HE_CO -> chuoi rong (khong loi, khong canh bao)"; fi
+      - name: 10. Mot JWT gia (khong phai secret)
+        run: |
+          echo "jwt gia: eyJhbGciOiJub25lIn0.eyJzdWIiOiJnaWEta2hvbmctdGhhdCJ9.Z2lh"
+      - name: 11. Ghi ra tep — che chi la tinh nang cua LOG
+        run: |
+          printf %s "$S" > ra-tep.txt
+          echo "so byte trong tep: $(wc -c < ra-tep.txt)"
+          echo "tep co chua chuoi 'gia-tri-thu': $(grep -c gia-tri-thu ra-tep.txt)"
+      - id: ra
+        name: 12. Dua bi mat ra output cua job
+        run: |
+          echo "gia-tri=$S" >> "$GITHUB_OUTPUT"
+          echo "binh-thuong=xin-chao" >> "$GITHUB_OUTPUT"
+  doc-output:
+    needs: che
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "bi-mat-ra-ngoai = '${{ needs.che.outputs.bi-mat-ra-ngoai }}'"
+          echo "binh-thuong     = '${{ needs.che.outputs.binh-thuong }}'"

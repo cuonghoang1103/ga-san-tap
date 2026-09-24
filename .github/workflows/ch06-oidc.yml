@@ -1,0 +1,35 @@
+# Chuong 6.3 — token OIDC: xin, doc claims. KHONG cau hinh cloud nao; chi in claims da giai ma.
+name: ch06-oidc
+on:
+  push:
+    branches: [ch06-bi-mat]
+    paths: ['.github/workflows/ch06-oidc.yml', 'ch06/doc-claims.sh']
+  workflow_dispatch:
+permissions: {}
+jobs:
+  khong-id-token:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash ch06/doc-claims.sh
+  co-id-token:
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: audience mac dinh
+        run: bash ch06/doc-claims.sh
+      - name: audience tu dat (vd AWS)
+        run: bash ch06/doc-claims.sh sts.amazonaws.com
+  chi-id-token:
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write     # KHONG liet ke contents
+    steps:
+      - name: checkout khi chi co id-token write (kho cong khai)
+        uses: actions/checkout@v4
+      - run: bash ch06/doc-claims.sh | sed -n '/payload/,/}/p' | grep -E 'sub|ref"'

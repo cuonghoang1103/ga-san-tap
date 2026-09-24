@@ -1,0 +1,39 @@
+# Chuong 6.2/6.3 — environment: secret theo moi truong, nguoi duyet, luat nhanh, va claim sub doi theo.
+name: ch06-env
+on:
+  push:
+    branches: [ch06-bi-mat]
+    paths: ['.github/workflows/ch06-env.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  khong-env:
+    runs-on: ubuntu-24.04
+    env:
+      TRUNG: ${{ secrets.CH06_TRUNG }}
+      ENVG: ${{ secrets.CH06_ENV_GIA }}
+    steps:
+      - run: |
+          echo "CH06_TRUNG dai ${#TRUNG} ky tu (26 = ban cap KHO)"
+          echo "CH06_ENV_GIA: ${ENVG:-(rong — secret cua environment khong toi job khong khai environment)}"
+  co-env:
+    runs-on: ubuntu-24.04
+    environment: ch06-production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TRUNG: ${{ secrets.CH06_TRUNG }}
+      ENVG: ${{ secrets.CH06_ENV_GIA }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "CH06_TRUNG dai ${#TRUNG} ky tu (33 = ban cap ENVIRONMENT thang)"
+          echo "CH06_ENV_GIA: $ENVG"
+      - run: bash ch06/doc-claims.sh | grep -E '"(sub|environment|ref)"'
+  chi-main:
+    runs-on: ubuntu-24.04
+    environment: ch06-chi-main
+    steps:
+      - run: echo "neu thay dong nay thi luat nhanh da khong chan"

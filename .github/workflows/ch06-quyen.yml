@@ -1,0 +1,67 @@
+# Chuong 6.2 — GITHUB_TOKEN: quyen mac dinh, quyen toi thieu, 403 khi thieu, ranh gioi mot kho.
+# KHONG co khoi permissions: o muc workflow — de job khong khai nhan dung MAC DINH cua kho.
+name: ch06-quyen
+on:
+  push:
+    branches: [ch06-bi-mat]
+    paths: ['.github/workflows/ch06-quyen.yml']
+  workflow_dispatch:
+jobs:
+  mac-dinh:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+    steps:
+      - name: Doc (GET) mot thu cong khai
+        run: |
+          gh api "repos/$R" --jq '"kho: \(.full_name) · private=\(.private)"'
+      - name: Ghi commit status khi KHONG co statuses write
+        run: |
+          gh api -X POST "repos/$R/statuses/$GITHUB_SHA" -f state=success -f context=ch06/mac-dinh 2>&1 || echo "=> ma thoat $?"
+      - name: Ghi mot tep (contents write) khi chi co contents read
+        run: |
+          git init -q x && cd x && git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/$R.git"
+          git -c user.name=t -c user.email=t@t commit -q --allow-empty -m thu
+          git push origin HEAD:refs/heads/ch06-thu-push 2>&1 | sed 's/x-access-token:[^@]*@/x-access-token:***@/' || true
+  toi-thieu:
+    runs-on: ubuntu-24.04
+    permissions:
+      statuses: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+    steps:
+      - name: checkout khi contents = none (kho CONG KHAI)
+        uses: actions/checkout@v4
+      - run: ls -1 .github/workflows | head -3
+      - name: Ghi commit status — du quyen
+        run: |
+          gh api -X POST "repos/$R/statuses/$GITHUB_SHA" -f state=success -f context=ch06/toi-thieu -f description='ghi bang GITHUB_TOKEN' --jq '"HTTP 201 · status id \(.id) · \(.context) = \(.state)"'
+      - name: Doc issues khi issues = none
+        run: gh api "repos/$R/issues?state=all&per_page=1" --jq length 2>&1 || echo "=> ma thoat $?"
+      - name: Vuot ranh gioi kho — ghi status vao actions/checkout
+        run: |
+          gh api -X POST "repos/actions/checkout/statuses/$GITHUB_SHA" -f state=success -f context=ch06 2>&1 || echo "=> ma thoat $?"
+  rong:
+    runs-on: ubuntu-24.04
+    permissions: {}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+    steps:
+      - name: checkout voi permissions {}
+        uses: actions/checkout@v4
+      - run: git log --oneline -1
+      - name: Doc metadata kho voi permissions {}
+        run: gh api "repos/$R" --jq .full_name 2>&1 || echo "=> ma thoat $?"
+  doc-het:
+    runs-on: ubuntu-24.04
+    permissions: read-all
+    steps:
+      - run: echo "xem khoi GITHUB_TOKEN Permissions trong Set up job"
+  ghi-het:
+    runs-on: ubuntu-24.04
+    permissions: write-all
+    steps:
+      - run: echo "xem khoi GITHUB_TOKEN Permissions trong Set up job"

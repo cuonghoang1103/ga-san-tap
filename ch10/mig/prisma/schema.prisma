@@ -1,0 +1,22 @@
+// Thu nho cua schema api-backend quanh su co 28–29/06/2026 (note_subject_shares)
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id     Int         @id @default(autoincrement())
+  name   String
+  shares NoteShare[] @relation("ShareRecipient")
+  @@map("users")
+}
+model NoteShare {
+  id          Int  @id @default(autoincrement())
+  subjectId   Int  @map("subject_id")
+  recipientId Int  @map("recipient_id")
+  recipient   User @relation("ShareRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  @@unique([subjectId, recipientId], name: "uk_note_subject_share")
+  @@map("note_subject_shares")
+}

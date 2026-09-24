@@ -1,0 +1,38 @@
+# Chuong 10 · ca 5 — MIGRATION HONG, P3018 → P3009 (28–29/06/2026), dung lai tren Postgres that.
+name: ch10-migration
+on:
+  push:
+    branches: [ch10-chan-doan]
+    paths: ['ch10/mig/**', '.github/workflows/ch10-migration.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mig:
+    strategy:
+      fail-fast: false
+      matrix:
+        ca: [dua-nhau, giao-dich]
+    name: ${{ matrix.ca }}
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 2s --health-retries 20
+    defaults:
+      run:
+        working-directory: ch10/mig
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm i --no-audit --no-fund --loglevel=error && npx prisma --version | head -3
+      - name: Tao DB
+        run: for d in prod moi shadow shadow2 giaodich; do psql postgresql://postgres:postgres@localhost:5432/postgres -qc "create database $d"; done
+      - name: ${{ matrix.ca }}
+        run: ./${{ matrix.ca }}.sh

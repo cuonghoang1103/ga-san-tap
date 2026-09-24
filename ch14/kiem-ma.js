@@ -1,4 +1,4 @@
-// "Lint" toi gian cho sân tập: cam console.log va 'var ' trong src/.
+// "Lint" (dung chung cho ca ba goi) toi gian cho sân tập: cam console.log va 'var ' trong src/.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 const dir = process.argv[2] || 'src';

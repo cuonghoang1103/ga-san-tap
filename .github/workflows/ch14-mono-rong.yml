@@ -1,0 +1,28 @@
+# Chuong 14.4 — dieu gi xay ra khi ma tran dong nhan mang RONG ma KHONG co if chan.
+name: ch14-mono-rong
+on:
+  push:
+    branches: [ch14-mono]
+permissions:
+  contents: read
+jobs:
+  thay-doi:
+    runs-on: ubuntu-24.04
+    outputs:
+      goi: ${{ steps.g.outputs.goi }}
+    steps:
+      - id: g
+        env:
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          case "$MSG" in docs*) echo 'goi=[]' >> "$GITHUB_OUTPUT";; *) echo 'goi=["backend"]' >> "$GITHUB_OUTPUT";; esac
+  kiem-khong-chan:
+    needs: thay-doi
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        goi: ${{ fromJSON(needs.thay-doi.outputs.goi) }}
+    steps:
+      - env:
+          GOI: ${{ matrix.goi }}
+        run: echo "kiem $GOI"

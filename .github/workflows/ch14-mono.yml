@@ -1,0 +1,88 @@
+# Chuong 14.4 — CI cho monorepo: phat hien goi bi doi (2 cach), ma tran dong, mot check tong hop.
+name: ch14-mono
+on:
+  push:
+    branches: [ch14-mono]
+permissions:
+  contents: read
+jobs:
+  thay-doi:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      goi: ${{ steps.tu-lam.outputs.goi }}
+      loc-backend: ${{ steps.loc.outputs.backend }}
+      loc-frontend: ${{ steps.loc.outputs.frontend }}
+      loc-desktop: ${{ steps.loc.outputs.desktop }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0          # can lich su de so sanh voi commit truoc
+          persist-credentials: false
+      - name: Cach 1 - dorny/paths-filter
+        id: loc
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            backend:  ['ch14/backend/**', 'ch14/kiem-ma.js']
+            frontend: ['ch14/frontend/**', 'ch14/kiem-ma.js']
+            desktop:  ['ch14/desktop/**', 'ch14/kiem-ma.js']
+      - name: Cach 2 - tu lam bang git diff
+        id: tu-lam
+        env:
+          TRUOC: ${{ github.event.before }}
+        run: |
+          if [ "$TRUOC" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$TRUOC" 2>/dev/null; then
+            echo "Nhanh moi / khong co commit truoc -> coi nhu doi het"
+            goi='["backend","desktop","frontend"]'
+          else
+            git diff --name-only "$TRUOC" "$GITHUB_SHA" | tee doi.txt
+            goi=$(jq -R -s -c '
+              split("\n") | map(select(length > 0)) as $f
+              | if any($f[]; . == "ch14/kiem-ma.js") then ["backend","desktop","frontend"]
+                else [$f[] | select(test("^ch14/(backend|frontend|desktop)/")) | split("/")[1]] | unique end' doi.txt)
+          fi
+          echo "goi=$goi" | tee -a "$GITHUB_OUTPUT"
+      - name: So hai cach
+        env:
+          B: ${{ steps.loc.outputs.backend }}
+          F: ${{ steps.loc.outputs.frontend }}
+          D: ${{ steps.loc.outputs.desktop }}
+          CHANGES: ${{ steps.loc.outputs.changes }}
+        run: echo "paths-filter -> backend=$B frontend=$F desktop=$D changes=$CHANGES"
+
+  kiem:
+    needs: thay-doi
+    if: needs.thay-doi.outputs.goi != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        goi: ${{ fromJSON(needs.thay-doi.outputs.goi) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Lint + test mot goi
+        working-directory: ch14/${{ matrix.goi }}
+        run: npm run -s lint && npm test
+
+  ket-luan:
+    # CHECK BAT BUOC DUY NHAT cua monorepo: luon chay, luon bao cao.
+    if: always()
+    needs: [thay-doi, kiem]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - env:
+          GOI: ${{ needs.thay-doi.outputs.goi }}
+          KQ_DOI: ${{ needs.thay-doi.result }}
+          KQ_KIEM: ${{ needs.kiem.result }}
+        run: |
+          echo "goi bi doi: $GOI"
+          echo "thay-doi=$KQ_DOI kiem=$KQ_KIEM"
+          [ "$KQ_DOI" = success ] || { echo "::error::khong xac dinh duoc goi bi doi"; exit 1; }
+          case "$KQ_KIEM" in success|skipped) echo "ket-luan: DAT";; *) echo "::error::kiem = $KQ_KIEM"; exit 1;; esac

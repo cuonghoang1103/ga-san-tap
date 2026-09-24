@@ -1,0 +1,17 @@
+name: ch01 giai phau                  # ten hien tren tab Actions
+on:                                   # KHI NAO chay
+  push:
+    branches: [ch01-workflow]
+  workflow_dispatch:                  # them nut "Run workflow"
+jobs:
+  xem:                                # id cua job
+    runs-on: ubuntu-latest            # xin mot may moi
+    steps:
+      - uses: actions/checkout@v7     # dung action co san
+      - name: Ai kich hoat toi
+        run: |
+          echo "su kien : $GITHUB_EVENT_NAME"
+          echo "ref     : $GITHUB_REF"
+          echo "sha     : $GITHUB_SHA"
+          echo "may     : $RUNNER_NAME ($RUNNER_OS, $ImageOS $ImageVersion)"
+          ls

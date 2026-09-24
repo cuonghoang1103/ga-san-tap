@@ -1,0 +1,32 @@
+name: ch01 yaml bay
+on:
+  push:
+    branches: [ch01-workflow]
+    paths: ['.github/workflows/ch01-yaml-bay.yml']
+  workflow_dispatch:
+jobs:
+  gap-dong:
+    runs-on: ubuntu-latest
+    steps:
+      - name: run voi dau |
+        run: |
+          echo mot
+          echo hai
+      - name: run voi dau >
+        run: >
+          echo mot
+          echo hai
+  khong-nhay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 18.20
+      - run: node --version
+  co-nhay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '18.20'
+      - run: node --version

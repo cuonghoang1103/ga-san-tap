@@ -1,0 +1,20 @@
+name: ch01 test
+on:
+  push:
+    branches: [ch01-workflow, ch01-pr-bao-cao]
+  pull_request:
+    branches: [ch01-workflow]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Commit nao dang nam trong thu muc lam viec
+        run: |
+          echo "su kien     = $GITHUB_EVENT_NAME"
+          echo "GITHUB_REF  = $GITHUB_REF"
+          echo "GITHUB_SHA  = $GITHUB_SHA"
+          echo "head.sha    = ${{ github.event.pull_request.head.sha }}"
+          echo "base.sha    = ${{ github.event.pull_request.base.sha }}"
+          git log -1 --format='HEAD        = %H%nparents     = %P'
+      - run: node tests/chay.js

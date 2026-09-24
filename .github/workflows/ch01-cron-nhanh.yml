@@ -1,0 +1,9 @@
+name: ch01 cron tren nhanh
+on:
+  schedule:
+    - cron: '*/5 * * * *'     # moi 5 phut — nhung file nay KHONG nam tren main
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - run: date -u

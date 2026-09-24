@@ -1,0 +1,11 @@
+name: ch01 bo loc hai sao
+on:
+  push:
+    branches: [ch01-workflow]
+    paths: ['app/**']
+jobs:
+  kiem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: git show --stat --format='%h %s' HEAD

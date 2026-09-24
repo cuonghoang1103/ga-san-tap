@@ -1,0 +1,40 @@
+# Chuong 6.5 — chay script soat (6 lenh grep) + actionlint + zizmor tren chinh san tap. Khong can quyen nao.
+name: ch06-soat
+on:
+  push:
+    branches: [ch06-bi-mat]
+    paths: ['.github/workflows/ch06-soat.yml', 'ch06/soat-actions.sh']
+  workflow_dispatch:
+permissions: {}
+jobs:
+  soat:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Soat kho nay
+        run: bash ch06/soat-actions.sh
+      - name: Thu lam HONG — them mot tep nhap co pull_request_target
+        run: |
+          d=$(mktemp -d); cp -R .github "$d/"
+          printf 'on: pull_request_target\njobs: {}\n' > "$d/.github/workflows/nhap.yml"
+          cd "$d" && bash "$GITHUB_WORKSPACE/ch06/soat-actions.sh" | grep -E "pull_request_target|ket qua"
+  cong-cu-that:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: actionlint 1.7.12
+        run: docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.12 -shellcheck= || true
+      - name: zizmor (offline)
+        run: |
+          pipx run zizmor --version
+          pipx run zizmor --offline --format plain .github/workflows > z.txt 2>&1 || true
+          grep -E '^(error|warning|info)\[' z.txt | sed -E 's/\]:.*/]/' | sort | uniq -c | sort -rn
+          tail -1 z.txt

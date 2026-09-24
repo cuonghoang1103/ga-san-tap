@@ -24,6 +24,17 @@ jobs:
       - run: npm ci --no-audit --no-fund 2>&1 | tail -1
       - run: npm run build 2>&1 | tail -1; ls node_modules/.cache 2>&1 || true
 
+  chet-that:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: path KHONG BAO GIO duoc tao ra
+        uses: actions/cache@v5
+        with:
+          path: build/.cache-tsc
+          key: ch05-chet-that-${{ runner.os }}
+      - run: echo "job xanh, khong ai tao build/.cache-tsc"
+        working-directory: .
+
   luon-truot:
     runs-on: ubuntu-24.04
     steps:

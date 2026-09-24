@@ -1,0 +1,18 @@
+name: ch01 canh gac
+on:
+  push:
+    branches: [ch01-workflow]
+    paths: ['.github/workflows/ch01-canh-gac.yml']
+jobs:
+  kiem:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          last=$(gh api "repos/${{ github.repository }}/actions/workflows/ch01-giai-phau.yml/runs?status=success&per_page=1" --jq '.workflow_runs[0].created_at')
+          age=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
+          echo "lan chay thanh cong cuoi: $last ($age ngay truoc)"
+          test "$age" -le 8

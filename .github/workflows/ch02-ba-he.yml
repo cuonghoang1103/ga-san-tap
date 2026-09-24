@@ -52,3 +52,10 @@ jobs:
           echo "chu thuong: ${ten,,}"
           declare -A m=([a]=1)
           echo "mang ket hop: ${m[a]}"
+      - name: H. Bash moi tren macOS
+        if: runner.os == 'macOS'
+        shell: /opt/homebrew/bin/bash {0}
+        continue-on-error: true
+        run: |
+          echo "bash: $BASH_VERSION"
+          ten="GitHub"; echo "chu thuong: ${ten,,}"

@@ -1,0 +1,49 @@
+# Chuong 10 · ca 1 — BAN DUNG CU (02/07/2026): deploy --no-build giu anh cu,
+# container "healthy", nhung route moi tra 404. Smoke-test 404 bat duoc no.
+name: ch10-ban-cu
+on:
+  push:
+    branches: [ch10-chan-doan]
+    paths: ['ch10/ban-cu/**', '.github/workflows/ch10-ban-cu.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    strategy:
+      fail-fast: false
+      matrix:
+        cach: [no-build, day-du]
+    name: deploy (${{ matrix.cach }})
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ch10/ban-cu
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lan deploy TRUOC — anh cu, chua co /gifs
+        run: docker build -q -t ch10-api:latest . && docker run --rm ch10-api:latest ls routes
+      - name: Commit MOI toi — them route gifs
+        run: cp moi/gifs.js src/routes/ && ls src/routes
+      - name: Deploy (${{ matrix.cach }})
+        run: |
+          if [ "${{ matrix.cach }}" = "day-du" ]; then
+            docker build -q -t ch10-api:latest .
+          else
+            echo "--no-build: bo qua buoc build, dung lai anh ch10-api:latest dang co"
+          fi
+          docker run -d --name ch10-api -p 19100:3001 ch10-api:latest
+          for i in $(seq 1 10); do
+            s=$(docker inspect -f '{{.State.Health.Status}}' ch10-api); [ "$s" = healthy ] && break; sleep 1
+          done
+          echo "health: $(docker inspect -f '{{.State.Health.Status}}' ch10-api)"
+          docker logs ch10-api
+      - name: Nhin tu ngoai bang curl (khong xac thuc)
+        run: |
+          for p in /health /api/v1/courses /api/v1/profile /api/v1/gifs /api/v1/khong-ton-tai; do
+            printf '%-24s ' "$p"; curl -s -o /tmp/b -w '%{http_code}  ' "http://127.0.0.1:19100$p"; cat /tmp/b; echo
+          done
+          echo "--- curl -sI (HEAD) ---"
+          curl -sI http://127.0.0.1:19100/api/v1/gifs | head -1
+      - name: Smoke-test (chep tu deploy.sh)
+        run: ./smoke.sh ch10-api

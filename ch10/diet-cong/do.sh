@@ -60,3 +60,13 @@ fuser -k -KILL $P/tcp >/dev/null 2>&1; sleep 1
 echo "sau 'fuser -k $P/tcp': ss con thay $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*' || echo 'KHONG AI')"
 bat 3; cho && echo "server 3 len: $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*')"; echo "moi.txt sau khi khoi dong lai: HTTP $(ma moi.txt)"
 fuser -k -KILL $P/tcp >/dev/null 2>&1 || true
+if [ "$CACH" = npm-start ]; then
+  echo "=== (6) restart-next.sh (co hau dieu kien) ==="
+  bat 4; cho; echo "tep them sau: $(date +%s)" > public/moi2.txt
+  echo "moi2.txt truoc: HTTP $(ma moi2.txt)"
+  ../restart-next.sh $P; echo "restart-next rc=$?"
+  echo "moi2.txt sau: HTTP $(ma moi2.txt)"
+  echo "--- chay lai khi KHONG ai giu cong ---"; fuser -k -KILL $P/tcp >/dev/null 2>&1 || true; sleep 1
+  ../restart-next.sh $P; echo "restart-next rc=$?"
+  fuser -k -KILL $P/tcp >/dev/null 2>&1 || true
+fi

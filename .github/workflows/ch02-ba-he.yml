@@ -1,0 +1,46 @@
+# Chuong 2 (bai 2.3): cung mot buoc tren ba he dieu hanh — shell mac dinh, duong dan, CRLF, hoa thuong, ma thoat
+name: ch02 ba he dieu hanh
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-ba-he.yml', 'ch02/**']
+  workflow_dispatch:
+jobs:
+  cung-buoc:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: A. Shell mac dinh, cung mot dong lenh
+        continue-on-error: true
+        run: echo "HOME=$HOME" && echo "hai lenh noi bang &&"
+      - name: B. Lenh ngoai hong o GIUA, shell mac dinh
+        id: giua
+        continue-on-error: true
+        run: |
+          node -e "process.exit(3)"
+          node -e "console.log('lenh sau van chay')"
+      - name: C. Duong dan (shell bash o ca ba)
+        shell: bash
+        run: |
+          echo "shell      : $BASH  ($BASH_VERSION)"
+          echo "WORKSPACE  : $GITHUB_WORKSPACE"
+          echo "RUNNER_TEMP: $RUNNER_TEMP"
+          echo "pwd        : $(pwd)"
+          echo "HOME       : $HOME"
+      - name: D. CRLF sau checkout
+        shell: bash
+        run: |
+          echo "core.autocrlf = $(git config --get core.autocrlf || echo '(chua dat)')"
+          od -c ch02/xin-chao.sh | head -2
+          bash ch02/xin-chao.sh
+      - name: E. Hoa thuong
+        shell: bash
+        run: |
+          if [ -f CH02/XIN-CHAO.SH ]; then echo "CH02/XIN-CHAO.SH: THAY"; else echo "CH02/XIN-CHAO.SH: KHONG thay"; fi
+      - name: F. Ket qua buoc B
+        shell: bash
+        run: echo "buoc B outcome=${{ steps.giua.outcome }}"

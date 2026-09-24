@@ -1,0 +1,74 @@
+# Chuong 2 (bai 2.5): matrix no thanh N job; include/exclude; fail-fast bat/tat; continue-on-error; max-parallel
+name: ch02 ma tran
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-ma-tran.yml']
+  workflow_dispatch:
+jobs:
+  tich-cheo:
+    name: tich-cheo (${{ matrix.os }}, node ${{ matrix.node }})
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+        node: [20, 22, 24]
+        exclude:
+          - os: ubuntu-24.04-arm
+            node: 24
+        include:
+          - node: 24
+            thu-nghiem: true
+          - os: ubuntu-24.04
+            node: 25
+            thu-nghiem: true
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: echo '${{ toJSON(matrix) }}'
+
+  ff-bat:
+    strategy:
+      matrix:
+        cham: [5, 60, 90]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "nhanh cham=${{ matrix.cham }} bat dau $(date -u +%T)"
+          sleep ${{ matrix.cham }}
+          if [ ${{ matrix.cham }} = 5 ]; then echo "nhanh 5s HONG"; exit 1; fi
+          echo "xong $(date -u +%T)"
+
+  ff-tat:
+    strategy:
+      fail-fast: false
+      matrix:
+        cham: [5, 60, 90]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "nhanh cham=${{ matrix.cham }} bat dau $(date -u +%T)"
+          sleep ${{ matrix.cham }}
+          if [ ${{ matrix.cham }} = 5 ]; then echo "nhanh 5s HONG"; exit 1; fi
+          echo "xong $(date -u +%T)"
+
+  thu-nghiem:
+    strategy:
+      matrix:
+        loai: [on-dinh, thu-nghiem]
+        include:
+          - loai: thu-nghiem
+            cho-hong: true
+    continue-on-error: ${{ matrix.cho-hong == true }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          if [ "${{ matrix.loai }}" = thu-nghiem ]; then sleep 5; echo "ban thu nghiem HONG"; exit 1; fi
+          sleep 40; echo "ban on dinh xong"
+
+  tung-cai-mot:
+    strategy:
+      max-parallel: 1
+      matrix:
+        so: [1, 2, 3]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "nhanh ${{ matrix.so }} chay luc $(date -u +%T)"; sleep 10

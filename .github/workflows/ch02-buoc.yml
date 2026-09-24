@@ -1,0 +1,58 @@
+# Chuong 2 (bai 2.4): buoc, ma thoat, pipefail, outcome vs conclusion, GITHUB_ENV, post-step
+name: ch02 buoc va ma thoat
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-buoc.yml']
+  workflow_dispatch:
+jobs:
+  buoc:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: 1. Ong, shell MAC DINH
+        run: |
+          lenh-khong-ton-tai | tail -1
+          echo "ma thoat cua ca ong: $?"
+      - name: 2. Ong, shell bash (co pipefail)
+        id: ong
+        continue-on-error: true
+        shell: bash
+        run: |
+          lenh-khong-ton-tai | tail -1
+          echo "dong nay khong bao gio in"
+      - name: 3. outcome va conclusion cua buoc 2
+        run: |
+          echo "outcome    = ${{ steps.ong.outcome }}"
+          echo "conclusion = ${{ steps.ong.conclusion }}"
+      - name: 4. export, cd, GITHUB_ENV
+        run: |
+          export XUAT=co
+          echo "GHI=co" >> "$GITHUB_ENV"
+          cd /tmp
+          echo "trong buoc 4: XUAT=[$XUAT] GHI=[$GHI] pwd=$(pwd)"
+      - name: 5. Buoc sau thay gi
+        run: |
+          echo "buoc 5: XUAT=[$XUAT] GHI=[$GHI] pwd=$(pwd)"
+      - name: 6. Tom tat len trang run
+        run: |
+          echo "### ch02 buoc" >> "$GITHUB_STEP_SUMMARY"
+          echo "| buoc | ket qua |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 2. ong + pipefail | ${{ steps.ong.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+      - name: 7. Chi khi co buoc hong
+        if: failure()
+        run: echo "khong in, vi buoc 2 da duoc continue-on-error"
+      - name: 8. Hong that
+        run: exit 7
+      - name: 9. Bi bo qua (success() ngam dinh)
+        run: echo "khong bao gio chay"
+      - name: 10. failure()
+        if: failure()
+        run: echo "chay vi buoc 8 hong"
+      - name: 11. always()
+        if: always()
+        run: echo "luon chay - tai log, bao cao"

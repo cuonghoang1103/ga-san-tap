@@ -1,0 +1,95 @@
+# Chuong 2 (bai 2.1 + 2.2): moi job mot may; needs, outputs, skip lan truyen, always/failure/!cancelled
+name: ch02 needs va outputs
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-needs.yml']
+  workflow_dispatch:
+jobs:
+  chuan-bi:
+    runs-on: ubuntu-24.04
+    outputs:
+      phien-ban: ${{ steps.pb.outputs.phien_ban }}
+      ngay: ${{ steps.pb.outputs.ngay }}
+    steps:
+      - name: May nao day
+        run: |
+          echo "runner_name : $RUNNER_NAME"
+          echo "hostname    : $(hostname)"
+          echo "machine-id  : $(cut -c1-12 /etc/machine-id)"
+          echo "may bat tu  : $(uptime -s) (da song $(cut -d' ' -f1 /proc/uptime)s)"
+      - name: Tinh phien ban
+        id: pb
+        run: |
+          echo "phien_ban=1.4.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "ngay=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+          echo "da ghi vao GITHUB_OUTPUT:"; cat "$GITHUB_OUTPUT"
+      - name: De lai dau vet
+        run: |
+          echo "job chuan-bi da o day" > /tmp/dau-vet.txt
+          echo "dau-vet" > "$HOME/dau-vet.txt"
+          ls -l /tmp/dau-vet.txt "$HOME/dau-vet.txt"
+
+  dung:
+    needs: chuan-bi
+    runs-on: ubuntu-24.04
+    steps:
+      - name: May nao day
+        run: |
+          echo "runner_name : $RUNNER_NAME"
+          echo "hostname    : $(hostname)"
+          echo "machine-id  : $(cut -c1-12 /etc/machine-id)"
+          echo "may bat tu  : $(uptime -s) (da song $(cut -d' ' -f1 /proc/uptime)s)"
+      - name: Dau vet cua job truoc?
+        run: ls -l /tmp/dau-vet.txt "$HOME/dau-vet.txt" || echo ">> khong co gi cua job chuan-bi"
+      - name: Nhan output qua needs
+        run: |
+          echo "phien ban : ${{ needs.chuan-bi.outputs.phien-ban }}"
+          echo "ngay      : ${{ needs.chuan-bi.outputs.ngay }}"
+          echo "khong khai: [${{ needs.chuan-bi.outputs.khong-co }}]"
+
+  kiem:
+    needs: chuan-bi
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "gia vo mot bai test hong"
+          exit 1
+
+  deploy:
+    needs: [dung, kiem]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "deploy ${{ needs.dung.result }}"
+
+  sau-deploy:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "don dep sau deploy"
+
+  bao-loi:
+    needs: [dung, kiem]
+    if: failure()
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "gui thong bao - co job hong"
+
+  bao-cao:
+    needs: [dung, kiem, deploy]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          echo "dung   : ${{ needs.dung.result }}"
+          echo "kiem   : ${{ needs.kiem.result }}"
+          echo "deploy : ${{ needs.deploy.result }}"
+          echo "chuan-bi (khong needs truc tiep): [${{ needs.chuan-bi.outputs.phien-ban }}]"
+          echo '${{ toJSON(needs) }}'
+
+  chua-huy:
+    needs: deploy
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "chay vi khong ai bam huy (deploy = ${{ needs.deploy.result }})"

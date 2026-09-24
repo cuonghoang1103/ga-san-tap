@@ -1,0 +1,31 @@
+# Bên DÙNG action phát hành — Chương 12, bài 12.3: con trỏ di động (@ch12-dem-tep-v1) vs ghim SHA.
+# (Phiên cloud không đẩy được thẻ git ⇒ dùng NHÁNH ch12-dem-tep-v1 làm con trỏ; GitHub giải nhánh/thẻ thành SHA y như nhau.)
+name: ch12-dung-ban
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-dung-ban.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  con-tro:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: d
+        uses: cuonghoang1103/ga-san-tap/actions/ch12-dem-tep@ch12-dem-tep-v1
+        with:
+          thu-muc: .
+      - env:
+          O: ${{ toJSON(steps.d.outputs) }}
+        run: echo "outputs = $O"
+  ghim-sha:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: d
+        uses: cuonghoang1103/ga-san-tap/actions/ch12-dem-tep@b78ea231368beed8bfd3f1edeca9edbca7703029 # v1.0.0
+        with:
+          thu-muc: .
+      - env:
+          O: ${{ toJSON(steps.d.outputs) }}
+        run: echo "outputs = $O"

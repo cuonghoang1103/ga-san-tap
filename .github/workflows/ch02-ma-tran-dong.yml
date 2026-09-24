@@ -1,0 +1,27 @@
+# Chuong 2 (bai 2.5): ma tran DONG — job truoc tinh danh sach, job sau no theo fromJSON
+name: ch02 ma tran dong
+on:
+  push:
+    branches: [ch02-job]
+    paths: ['.github/workflows/ch02-ma-tran-dong.yml', 'ch02/goi/**']
+  workflow_dispatch:
+jobs:
+  liet-ke:
+    runs-on: ubuntu-24.04
+    outputs:
+      goi: ${{ steps.ds.outputs.goi }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: ds
+        run: |
+          goi=$(ls ch02/goi | jq -R . | jq -cs .)
+          echo "goi=$goi" >> "$GITHUB_OUTPUT"
+          echo "danh sach: $goi"
+  kiem:
+    needs: liet-ke
+    strategy:
+      matrix:
+        goi: ${{ fromJSON(needs.liet-ke.outputs.goi) }}
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "kiem goi ${{ matrix.goi }} — nhanh ${{ strategy.job-index }}/${{ strategy.job-total }}"

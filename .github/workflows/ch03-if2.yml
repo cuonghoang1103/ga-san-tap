@@ -1,0 +1,55 @@
+name: ch03 if chuoi
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-if2.yml']
+permissions:
+  contents: read
+jobs:
+  chuoi:
+    runs-on: ubuntu-24.04
+    env:
+      TAT: 'false'
+    steps:
+      - name: "01 if: $ {{ 'abc' }}"
+        if: ${{ 'abc' }}
+        run: echo chay
+      - name: "02 if: $ {{ 'null' }}"
+        if: ${{ 'null' }}
+        run: echo chay
+      - name: "03 if: $ {{ 'False' }}"
+        if: ${{ 'False' }}
+        run: echo chay
+      - name: "04 if: format('{0}', 'false')"
+        if: format('{0}', 'false')
+        run: echo chay
+      - name: "05 if: $ {{ format('{0}', 'false') }}"
+        if: ${{ format('{0}', 'false') }}
+        run: echo chay
+      - name: "06 if: env.TAT"
+        if: env.TAT
+        run: echo chay
+      - name: "07 if: $ {{ env.TAT }}"
+        if: ${{ env.TAT }}
+        run: echo chay
+      - name: "08 if: toJSON(false)"
+        if: toJSON(false)
+        run: echo chay
+      - name: "09 if: 'false' == 'false' && 'false'"
+        if: "'x' && 'false'"
+        run: echo chay
+      - name: "10 if: !'false'  (phu dinh)"
+        if: "!'false'"
+        run: echo chay
+      - name: "11 if: $ {{ '' }}"
+        if: ${{ '' }}
+        run: echo chay
+      - name: "12 if: $ {{ 'true' }}"
+        if: ${{ 'true' }}
+        run: echo chay
+      - name: "13 if: $ {{ ' false' }}"
+        if: ${{ ' false' }}
+        run: echo chay
+      - name: "14 if: $ {{ '1' }}"
+        if: ${{ '1' }}
+        run: echo chay

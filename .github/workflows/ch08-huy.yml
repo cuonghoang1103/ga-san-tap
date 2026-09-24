@@ -1,6 +1,9 @@
 # Chuong 8 — bi HUY giua chung thi log ghi gi, ma thoat nao.
 name: ch08-huy
 on:
+  push:
+    branches: [ch08-do]
+    paths: ['.github/workflows/ch08-huy.yml']
   workflow_dispatch:
 permissions:
   contents: read

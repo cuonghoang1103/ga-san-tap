@@ -1,0 +1,27 @@
+# Chuong 8 — runner cua kho CONG KHAI thuc su co bao nhieu nhan / RAM / dia / tran heap.
+name: ch08-may
+on:
+  push:
+    branches: [ch08-do]
+    paths: ['.github/workflows/ch08-may.yml']
+permissions:
+  contents: read
+jobs:
+  may:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: May nay la may nao
+        shell: bash
+        run: |
+          echo "runner: $RUNNER_OS $RUNNER_ARCH · image: ${ImageOS:-?} ${ImageVersion:-?}"
+          case "$RUNNER_OS" in
+            Linux)   echo "nhan: $(nproc)"; free -m | awk '/Mem:/{printf "RAM: %d MB\n",$2}'; df -h / | tail -1 ;;
+            macOS)   echo "nhan: $(sysctl -n hw.ncpu)"; echo "RAM: $(( $(sysctl -n hw.memsize)/1048576 )) MB"; df -h / | tail -1 ;;
+            Windows) echo "nhan: $NUMBER_OF_PROCESSORS"; powershell -NoProfile -c "'RAM: {0} MB' -f [int]((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1MB)"; df -h /c | tail -1 ;;
+          esac
+          node --version
+          node -e 'console.log("heap limit MB:", (require("v8").getHeapStatistics().heap_size_limit/1048576).toFixed(0))'

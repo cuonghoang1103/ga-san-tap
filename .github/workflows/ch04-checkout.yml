@@ -1,0 +1,60 @@
+name: ch04 checkout
+on:
+  push:
+    branches: [ch04-action]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac-dinh:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Lich su lay ve duoc bao nhieu
+        run: |
+          echo "shallow        : $(git rev-parse --is-shallow-repository)"
+          echo "so commit      : $(git rev-list --count HEAD)"
+          echo "so tag         : $(git tag | wc -l)"
+          echo "nhanh          : $(git branch -a | tr '\n' ' ')"
+          echo "HEAD           : $(git rev-parse HEAD)"
+          echo "GITHUB_SHA     : $GITHUB_SHA"
+          echo "trang thai     : $(git status | head -1)"
+          git diff --stat origin/main...HEAD 2>&1 | tail -2 || true
+      - name: Khoa xac thuc nam o dau
+        run: |
+          git config --list --show-origin | grep -iE 'extraheader|includeif|credential' \
+            | sed -E 's/(basic )[A-Za-z0-9+\/=*]+/\1<DA-CHE>/' || echo "(khong co dong nao)"
+          echo "--- cac tep co chu extraheader ---"
+          grep -rl extraheader .git "$RUNNER_TEMP" 2>/dev/null || echo "(khong co)"
+      - name: Buoc SAU co doc duoc khoa khong
+        run: |
+          h=$(git config --get-all http.https://github.com/.extraheader || true)
+          echo "do dai header : ${#h} ky tu"
+          echo "20 ky tu dau  : ${h:0:20}"
+      - name: Thu push voi quyen contents read
+        run: |
+          git push origin HEAD:refs/heads/ch04-thu-push 2>&1 | tail -3 || true
+  khong-khoa:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Khong con khoa
+        run: |
+          git config --list --show-origin | grep -iE 'extraheader|includeif' || echo "(khong co dong nao)"
+          git push origin HEAD:refs/heads/ch04-thu-push 2>&1 | tail -2 || true
+  day-du:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Lich su day du
+        run: |
+          echo "shallow   : $(git rev-parse --is-shallow-repository)"
+          echo "so commit : $(git rev-list --count HEAD)"
+          echo "nhanh     : $(git branch -r | wc -l) nhanh o xa"
+          git diff --stat origin/main...HEAD | tail -1
+          du -sh .git

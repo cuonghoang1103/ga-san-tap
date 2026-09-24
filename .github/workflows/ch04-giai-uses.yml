@@ -1,0 +1,44 @@
+name: ch04 giai uses
+on:
+  push:
+    branches: [ch04-action]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  giai:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 1. checkout ghim THE major
+        uses: actions/checkout@v4
+      - name: 2. checkout ghim SHA day du
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ban-sha
+          persist-credentials: false
+      - name: 3. Action tai ve nam o dau
+        run: |
+          cd "$RUNNER_WORKSPACE/../_actions" && pwd
+          find . -maxdepth 3 -mindepth 3 -type d | sort
+          echo "--- actions/checkout/v4/action.yml, phan runs: ---"
+          sed -n '/^runs:/,$p' actions/checkout/v4/action.yml
+          echo "--- kich thuoc ---"
+          du -sh actions/checkout/*
+          ls actions/checkout/v4 | head -20
+      - name: 4. Action JS tu viet (pre/main/post)
+        id: soi
+        uses: ./.github/actions/soi-moi-truong
+        with:
+          loi-nhan: xin chao
+      - name: 5. Doc output cua action
+        run: echo "da-nhan = ${{ steps.soi.outputs.da-nhan }}"
+      - name: 6. Go sai ten input (node_version)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node_version: '20'
+      - name: 7. Node nao dang chay
+        run: node --version
+      - name: 8. Docker action (image co san tren Docker Hub)
+        uses: docker://alpine:3.20
+        with:
+          args: cat /etc/alpine-release

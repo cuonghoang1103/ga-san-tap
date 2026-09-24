@@ -1,0 +1,24 @@
+name: ch04 co y do
+on:
+  push:
+    branches: [ch04-action]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sha-ngan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e
+  docker-tren-mac:
+    runs-on: macos-15
+    steps:
+      - uses: docker://alpine:3.20
+        with:
+          args: echo khong bao gio in ra
+  local-truoc-checkout:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: ./.github/actions/chao-ga
+        with:
+          ten: Cuong

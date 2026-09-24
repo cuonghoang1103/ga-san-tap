@@ -1,0 +1,17 @@
+name: Soi moi truong
+description: Action JS tu viet — in ra nhung gi mot action NHIN THAY duoc (chi in TEN bien, khong in gia tri bi mat)
+inputs:
+  loi-nhan:
+    description: Mot chuoi bat ky
+    required: true
+  so-lan:
+    description: Co gia tri mac dinh
+    default: '2'
+outputs:
+  da-nhan:
+    description: Lap lai loi nhan
+runs:
+  using: node24
+  pre: pre.js
+  main: index.js
+  post: post.js

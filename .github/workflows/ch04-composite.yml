@@ -1,0 +1,21 @@
+name: ch04 composite
+on:
+  push:
+    branches: [ch04-action]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  goi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Goi composite action trong chinh repo
+        id: chao
+        uses: ./.github/actions/chao-ga
+        with:
+          ten: Cuong
+      - name: Doc output
+        run: echo "${{ steps.chao.outputs.loi-chao }}"

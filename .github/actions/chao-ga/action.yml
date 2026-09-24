@@ -1,0 +1,24 @@
+name: Chao GA
+description: Composite action nho — gom 2 buoc, nhan 1 input, tra 1 output
+inputs:
+  ten:
+    description: Ten nguoi duoc chao
+    required: true
+outputs:
+  loi-chao:
+    description: Cau chao da ghep
+    value: ${{ steps.ghep.outputs.loi-chao }}
+runs:
+  using: composite
+  steps:
+    - name: Ghep cau chao
+      id: ghep
+      shell: bash
+      env:
+        TEN: ${{ inputs.ten }}
+      run: echo "loi-chao=Xin chao $TEN tu composite action" >> "$GITHUB_OUTPUT"
+    - name: In noi action dang nam
+      shell: bash
+      run: |
+        echo "action_path = ${{ github.action_path }}"
+        ls "${{ github.action_path }}"

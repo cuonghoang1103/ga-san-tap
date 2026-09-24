@@ -1,0 +1,8 @@
+{
+  "name": "ch04-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ung dung nho de do cache cua setup-node (Chuong 4)",
+  "scripts": { "test": "node -e \"console.log(require('lodash').VERSION)\"" },
+  "dependencies": { "lodash": "4.17.21", "is-number": "7.0.0" }
+}

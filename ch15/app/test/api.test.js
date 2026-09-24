@@ -51,3 +51,9 @@ test('yeu cau sai thi 400 kem danh sach loi', { skip: !coDb }, async () => {
   assert.equal(r.status, 400);
   assert.equal((await r.json()).loi.length, 2);
 });
+
+test('danh sach bac si dem dung so lich', { skip: !coDb }, async () => {
+  await dat({ bacSi: 'BS Hoa', benhNhan: 'An', batDau: '2026-10-01T10:00:00Z' });
+  const ds = await (await fetch(`${goc}/api/bac-si`)).json();
+  assert.deepEqual(ds, [{ bacSi: 'BS Hoa', soLich: 1 }, { bacSi: 'BS Lan', soLich: 1 }]);
+});

@@ -1,6 +1,6 @@
 {
   "name": "ch15-phong-kham",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Dat lich phong kham — app toi gian cho du an cuoi khoa GitHub Actions (chuong 15)",
   "private": true,
   "type": "module",

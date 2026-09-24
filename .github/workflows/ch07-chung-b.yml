@@ -1,0 +1,18 @@
+# Chương 7 · bài 7.2 — HAI workflow khác nhau cùng "deploy" một chỗ (mô phỏng deploy-ghcr.yml + backend-vps.yml
+# của api-backend, từng đua nhau 03/07 và 06/07/2026). Cùng một tên group ⇒ GitHub xếp chúng thành một hàng.
+name: ch07 · chung group — workflow b
+on:
+  push:
+    branches: [ch07-toc-do]
+    paths: ['ch07/kich/chung']
+  workflow_dispatch:
+concurrency:
+  group: ch07-vps-chung-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  trien-khai:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "workflow b BAT DAU dung container luc $(date -u +%T)"
+      - run: sleep 30
+      - run: echo "workflow b XONG luc $(date -u +%T)"

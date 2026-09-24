@@ -45,6 +45,7 @@ jobs:
           rm -rf dist .tsbuildinfo
           echo "so file .ts: $(ls src | wc -l)"
           /usr/bin/time -f "tsc lanh: %e giay" npx tsc -p .
+          rm -rf dist .tsbuildinfo   # xoa de buoc sau CHI co thu cache tra ve
       - name: Khoi phuc .tsbuildinfo + dist
         id: tb
         uses: actions/cache@v5

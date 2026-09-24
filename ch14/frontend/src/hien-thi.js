@@ -1,2 +1,2 @@
 // Frontend: dinh dang nhan cho trong.
-export const nhan = (n) => (n === 0 ? 'Het cho' : `Con ${n} cho`);
+export const nhan = (n) => (n === 0 ? 'Da day' : `Con ${n} cho`);

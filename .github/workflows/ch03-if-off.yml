@@ -11,6 +11,6 @@ jobs:
     steps:
       - name: "truoc"
         run: echo truoc
-      - name: "if: off"
+      - name: "if: off (lan 2)"
         if: off
         run: echo chay

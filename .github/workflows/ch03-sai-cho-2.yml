@@ -1,0 +1,23 @@
+name: ch03 context sai cho 2
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-sai-cho-2.yml']
+permissions:
+  contents: read
+jobs:
+  runner-trong-if-job:
+    if: runner.os == 'Linux'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo a
+  secrets-trong-if-buoc:
+    runs-on: ubuntu-24.04
+    steps:
+      - if: secrets.KHONG_CO != ''
+        run: echo c
+  nhay-kep:
+    if: github.ref == "refs/heads/main"
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo d

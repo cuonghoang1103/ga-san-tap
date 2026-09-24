@@ -1,0 +1,28 @@
+# Chuong 10 · ca 4 — SAN CHOI KET MAN HINH TAI (30/07/2026): public/ chot luc khoi dong;
+# pkill -f "next start" co trung khong? Do tren ba cach chay x hai ban Next.
+name: ch10-diet-cong
+on:
+  push:
+    branches: [ch10-chan-doan]
+    paths: ['ch10/diet-cong/**', '.github/workflows/ch10-diet-cong.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  do:
+    strategy:
+      fail-fast: false
+      matrix:
+        next: ['14.2.35', '15.5.26']
+        cach: [next-start, npm-start, standalone]
+    name: next ${{ matrix.next }} · ${{ matrix.cach }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Do
+        working-directory: ch10/diet-cong
+        run: ./do.sh ${{ matrix.next }} ${{ matrix.cach }}

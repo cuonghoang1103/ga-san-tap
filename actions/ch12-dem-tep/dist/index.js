@@ -37201,6 +37201,7 @@ async function chay() {
 
   setOutput('tong', tong);
   setOutput('nhieu-nhat', nhieuNhat);
+  setOutput('so-loai', xep.length); // v1.1.0: output mới
   if (tong > 40) warning(`Thu muc ${thuMuc} co ${tong} tep — nhieu hon nguong 40`, { title: 'ch12-dem-tep' });
 
   const octokit = getOctokit(token);

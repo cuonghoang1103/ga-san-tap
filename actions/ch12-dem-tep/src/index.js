@@ -14,6 +14,7 @@ async function chay() {
 
   core.setOutput('tong', tong);
   core.setOutput('nhieu-nhat', nhieuNhat);
+  core.setOutput('so-loai', xep.length); // v1.1.0: output mới
   if (tong > 40) core.warning(`Thu muc ${thuMuc} co ${tong} tep — nhieu hon nguong 40`, { title: 'ch12-dem-tep' });
 
   const octokit = github.getOctokit(token);

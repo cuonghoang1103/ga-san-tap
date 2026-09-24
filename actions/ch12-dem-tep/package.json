@@ -1,6 +1,6 @@
 {
   "name": "ch12-dem-tep",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "JavaScript action cua Chuong 12: dem tep theo duoi, doc thong tin repo bang Octokit",

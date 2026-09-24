@@ -13,6 +13,8 @@ outputs:
     description: Tong so tep
   nhieu-nhat:
     description: Duoi tep xuat hien nhieu nhat
+  so-loai:
+    description: So loai duoi tep khac nhau (tu v1.1.0)
 runs:
   using: node24
   main: dist/index.js

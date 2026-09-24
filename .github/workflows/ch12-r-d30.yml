@@ -1,0 +1,8 @@
+name: ch12-r-d30
+on:
+  workflow_call:
+jobs:
+  day:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "toi day — job cua r-d30"

@@ -1,0 +1,6 @@
+name: ch12-r-d20
+on:
+  workflow_call:
+jobs:
+  d20:
+    uses: ./.github/workflows/ch12-r-d21.yml

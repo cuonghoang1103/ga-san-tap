@@ -1,0 +1,6 @@
+name: ch12-r-d04
+on:
+  workflow_call:
+jobs:
+  d04:
+    uses: ./.github/workflows/ch12-r-d05.yml

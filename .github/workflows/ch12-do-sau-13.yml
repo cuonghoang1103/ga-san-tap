@@ -1,0 +1,12 @@
+# Dò giới hạn lồng: bên gọi + 12 tầng reusable = 13 tầng. (docs 09/2026: tối đa 10 tầng)
+name: ch12-do-sau-13
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-do-sau-13.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vao:
+    uses: ./.github/workflows/ch12-r-d19.yml

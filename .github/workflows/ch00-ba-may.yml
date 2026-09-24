@@ -24,3 +24,7 @@ jobs:
           mkdir t && cd t && npm init -y >/dev/null
           start=$(date +%s); npm install --no-audit --no-fund express@4 >/dev/null; end=$(date +%s)
           echo "npm install express@4: $((end-start)) giay"
+      - name: Tran heap mac dinh cua Node tren may nay
+        shell: bash
+        run: |
+          node -e 'const v=require("v8").getHeapStatistics(); const os=require("os"); console.log("RAM", (os.totalmem()/2**30).toFixed(1), "GB · heap_size_limit", (v.heap_size_limit/2**20)|0, "MB")'

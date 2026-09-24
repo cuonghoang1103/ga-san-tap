@@ -1,0 +1,31 @@
+# Chuong 15 · 15.3 — lan 1 job "environment: ch15-production" do voi "environment not found" (run 36074781609).
+# Thu: tao environment gian tiep qua Deployments API bang GITHUB_TOKEN, roi goi lai environment tu mot job.
+name: ch15 · tao environment
+on:
+  push:
+    branches: [ch15-moi-truong]
+    paths: ['.github/workflows/ch15-moi-truong.yml']
+permissions:
+  contents: read
+jobs:
+  tao:
+    runs-on: ubuntu-24.04
+    permissions:
+      deployments: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Tao mot deployment cho environment ch15-production
+        run: |
+          ID=$(jq -n --arg ref "$GITHUB_SHA" '{ref:$ref, environment:"ch15-production", required_contexts:[], auto_merge:false, description:"ch15: chi de tao environment"}' \
+            | gh api -X POST "repos/${GITHUB_REPOSITORY}/deployments" --input - --jq .id)
+          echo "deployment $ID"
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/deployments/$ID/statuses" -f state=inactive \
+            -f description="khong phai ban deploy that" --jq '"trang thai: \(.state)"'
+          gh api "repos/${GITHUB_REPOSITORY}/environments" --jq '.environments[].name' || echo "(khong doc duoc danh sach environment bang GITHUB_TOKEN)"
+  thu:
+    needs: tao
+    runs-on: ubuntu-24.04
+    environment: ch15-production
+    steps:
+      - run: echo "da vao environment ch15-production"

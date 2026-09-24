@@ -48,6 +48,10 @@ echo "lsof la: $(command -v lsof) · $(lsof -v 2>&1 | grep -m1 -i revision)"
 echo "lsof -ti:$P (user $(whoami)): '$(lsof -ti:$P 2>&1)' rc=$?"
 echo "lsof -nP -iTCP:$P -sTCP:LISTEN:"; lsof -nP -iTCP:$P -sTCP:LISTEN 2>&1 | head -3
 echo "sudo lsof -ti:$P: '$(sudo lsof -ti:$P 2>&1 | tr '\n' ' ')'"
+PID=$(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*' | cut -d= -f2)
+echo "lsof -nP -p $PID (chi dong mang):"; lsof -nP -p "$PID" 2>&1 | awk 'NR==1 || /IPv|TCP|sock/' | head -5
+echo "sudo lsof -nP -i (5 dong dau):"; sudo lsof -nP -i 2>&1 | head -5
+echo "cat /proc/$PID/net/tcp6 co cong $(printf '%04X' $P)? $(grep -c ":$(printf '%04X' $P) " /proc/$PID/net/tcp6)"
 echo "ss -ltnpH sport = :$P → $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*')"
 echo "fuser $P/tcp → '$(fuser $P/tcp 2>/dev/null)'"
 lsof -ti:$P | xargs -r kill -9; sleep 1

@@ -1,0 +1,24 @@
+name: ch03 do context
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-do-context.yml']
+permissions:
+  contents: read
+jobs:
+  do:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Do context qua env
+        env:
+          GH: ${{ toJSON(github) }}
+          JOB: ${{ toJSON(job) }}
+          RUNNER: ${{ toJSON(runner) }}
+        run: |
+          echo "$GH" | jq -c '{event_name, ref, ref_name, sha: .sha[0:7], actor, run_number, run_attempt}'
+          echo "token: $(echo "$GH" | jq -r .token)"
+          echo "so khoa cap 1 cua github: $(echo "$GH" | jq 'keys | length')"
+          echo "event.pull_request: $(echo "$GH" | jq -c .event.pull_request)"
+          echo "so byte cua toJSON(github): ${#GH}"
+          echo "$JOB" | jq -c .
+          echo "$RUNNER" | jq -c .

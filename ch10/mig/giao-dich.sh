@@ -23,3 +23,19 @@ sed -i 's/"khong_ton_tai"/"tags"/' $NV/migration.sql
 P migrate deploy
 Q $DATABASE_URL "select to_regclass('public.tags') as bang_tags"
 P migrate status
+echo "## 7. ngoai le: cau lenh KHONG chay duoc trong giao dich"
+echo "### 7a. nhieu cau + CONCURRENTLY"
+M7=prisma/migrations/20260711120000_tags_index_conc
+mkdir -p $M7 && printf 'ALTER TABLE "tags" ADD COLUMN "slug" TEXT;\nCREATE INDEX CONCURRENTLY "idx_tags_slug" ON "tags"("slug");\n' > $M7/migration.sql
+P migrate deploy
+Q $DATABASE_URL "select exists(select 1 from information_schema.columns where table_name='tags' and column_name='slug') as cot_slug_con"
+P migrate resolve --rolled-back 20260711120000_tags_index_conc; rm -r $M7
+echo "### 7b. MOT cau CONCURRENTLY UNIQUE tren du lieu trung"
+Q $DATABASE_URL "insert into tags(name) values ('git'),('git') returning id"
+M8=prisma/migrations/20260712120000_tags_name_unique
+mkdir -p $M8 && printf 'CREATE UNIQUE INDEX CONCURRENTLY "tags_name_key" ON "tags"("name");\n' > $M8/migration.sql
+P migrate deploy
+Q $DATABASE_URL "select c.relname as chi_muc, i.indisvalid as hop_le from pg_index i join pg_class c on c.oid=i.indexrelid where c.relname='tags_name_key'"
+echo "### 7c. 'resolve --rolled-back roi chay lai' tren trang thai DO DANG nay"
+P migrate resolve --rolled-back 20260712120000_tags_name_unique
+P migrate deploy

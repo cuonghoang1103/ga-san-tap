@@ -19,12 +19,13 @@ jobs:
         run: |
           nohup sleep 600 > /dev/null 2>&1 &
           echo "da chay nen sleep 600, pid $!"
+      - name: Dang ky che gia tri thu
+        run: echo "::add-mask::gia-tri-thu-khong-that-123"
       - name: Doi so dong lenh ai cung doc duoc
         run: |
-          echo "::add-mask::gia-tri-thu-khong-that-123"
-          bash -c 'sleep 20' ch13 --token=gia-tri-thu-khong-that-123 &
+          bash -c 'sleep 20; true' ch13 --token=gia-tri-thu-khong-that-123 &
           sleep 1
-          echo "ps thay (log da che):"; ps -eo pid,user,args | grep -- '--token' | grep -v grep
+          echo "ps thay (log da che):"; ps -eo pid,user,args | grep -- '--token' | grep -v grep || true
           echo "so tien trinh co chuoi that trong doi so: $(ps -eo args | grep -c 'gia-tri-thu-khong-that-123')"
   xem-lai:
     needs: de-lai

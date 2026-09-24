@@ -1,0 +1,47 @@
+# Chuong 8 — mot duong ong "that": lint -> test (ma tran Node) -> build -> deploy.
+# Mot nhanh ma tran do vi dung API chi co tu Node 22. Bai tap: doc run nay theo thu tu.
+name: ch08-duong-ong
+on:
+  push:
+    branches: [ch08-do]
+    paths: ['ch08/app/**', '.github/workflows/ch08-duong-ong.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+    working-directory: ch08/app
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: node --check tinh.js && echo "cu phap on"
+
+  test:
+    needs: lint
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: '${{ matrix.node }}' }
+      - run: node --version
+      - run: npm test
+
+  build:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "build"
+        working-directory: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "deploy"
+        working-directory: .

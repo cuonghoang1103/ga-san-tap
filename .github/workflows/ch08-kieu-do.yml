@@ -1,0 +1,109 @@
+# Chuong 8 — moi kieu do mot job, de doc ma thoat va dong loi THAT.
+name: ch08-kieu-do
+on:
+  push:
+    branches: [ch08-do]
+    paths: ['.github/workflows/ch08-kieu-do.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+    working-directory: ch08/app
+jobs:
+  test-sai:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - name: Chay test (ky vong viet sai)
+        run: npm run test:sai
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: shellcheck, doi ra annotation
+        run: |
+          shellcheck --version | head -2
+          shellcheck -f gcc scripts/trien-khai.sh \
+            | sed -E 's/^([^:]+):([0-9]+):([0-9]+): ([a-z]+): (.*)$/::error file=ch08\/app\/\1,line=\2,col=\3::\5/'
+
+  thieu-lenh:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Go sai ten cong cu
+        run: eslnt .
+
+  npm-sai-ten:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Go sai ten script npm
+        run: npm run tset
+
+  khong-quyen:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Chay script chua chmod +x
+        run: ./scripts/chay.sh
+
+  cu-phap:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Script thieu fi
+        working-directory: .
+        run: |
+          echo "dong nay KHONG duoc in, vi bash doc ca khoi truoc"
+          if [ -n "$HOME" ]; then
+            echo "co HOME"
+
+  het-heap:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: V8 cham tran heap 64 MB
+        working-directory: .
+        run: node --max-old-space-size=64 -e 'const a=[]; for(;;) a.push(new Array(1e6).fill(0));'
+
+  oom-container:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Container gioi han 128 MB, Node doi 4 GB heap
+        working-directory: .
+        run: |
+          docker run --rm --name ga08-oom -m 128m --memory-swap 128m node:22-alpine \
+            node --max-old-space-size=4096 -e 'const a=[]; for(;;) a.push(new Array(1e6).fill(1));'
+
+  het-gio-buoc:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Buoc co timeout-minutes 1
+        timeout-minutes: 1
+        working-directory: .
+        run: |
+          echo "bat dau $(date -u +%T)"
+          sleep 150
+      - name: Buoc sau
+        working-directory: .
+        run: echo "khong bao gio toi day"
+
+  het-gio-job:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - name: Job co timeout-minutes 1
+        working-directory: .
+        run: |
+          echo "bat dau $(date -u +%T)"
+          sleep 150
+
+  phat-hanh:
+    needs: [test-sai, lint]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "chi chay khi test va lint xanh"
+        working-directory: .

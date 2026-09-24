@@ -1,0 +1,11 @@
+{
+  "name": "ch08-do",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test-that/*.test.js\"",
+    "test:chap-chon": "node --test \"test-chap-chon/*.test.js\"",
+    "test:thu-tu": "node --test \"test-thu-tu/*.test.js\"",
+    "test:sai": "node --test \"test-sai/*.test.js\""
+  }
+}

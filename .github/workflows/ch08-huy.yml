@@ -1,0 +1,22 @@
+# Chuong 8 — bi HUY giua chung thi log ghi gi, ma thoat nao.
+name: ch08-huy
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dai:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ngu dai, bat tin hieu
+        shell: bash
+        run: |
+          trap 'echo "nhan SIGTERM luc $(date -u +%T)"; exit 143' TERM
+          trap 'echo "nhan SIGINT luc $(date -u +%T)"; exit 130' INT
+          echo "bat dau $(date -u +%T), pid $$"
+          for i in $(seq 1 300); do sleep 1; done
+      - name: Don dep (always)
+        if: always()
+        run: echo "buoc always() van chay sau khi huy? job.status=${{ job.status }}"
+      - name: Buoc thuong
+        run: echo "buoc thuong"

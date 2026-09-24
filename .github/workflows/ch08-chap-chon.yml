@@ -1,0 +1,53 @@
+# Chuong 8 — test CHAP CHON that: 20 nhanh chay cung mot bai, dem bao nhieu nhanh do.
+name: ch08-chap-chon
+on:
+  push:
+    branches: [ch08-do]
+    paths: ['ch08/app/test-chap-chon/**', '.github/workflows/ch08-chap-chon.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+    working-directory: ch08/app
+jobs:
+  lan:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        lan: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: npm run test:chap-chon
+
+  vong-lap:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - name: Chay 200 lan tren CUNG mot runner, dem tung bai
+        run: |
+          set +e
+          dua=0; gio=0; ca_hai=0
+          for i in $(seq 1 200); do
+            out=$(node --test --test-reporter=tap "test-chap-chon/*.test.js" 2>&1)
+            a=0; b=0
+            grep -q "^not ok .* - doc sau khi ghi" <<<"$out" && a=1
+            grep -q "^not ok .* - hen gio 50ms" <<<"$out" && b=1
+            dua=$((dua+a)); gio=$((gio+b)); [ $a = 1 ] && [ $b = 1 ] && ca_hai=$((ca_hai+1))
+          done
+          echo "200 lan: dua do $dua · hen gio do $gio · ca hai $ca_hai"
+          echo "### 200 lan tren 1 runner: dua do $dua, hen gio do $gio" >> "$GITHUB_STEP_SUMMARY"
+      - name: Thu tu — chay rieng vs chay ca tep
+        run: |
+          set +e
+          node --test --test-name-pattern='gio moi' "test-thu-tu/*.test.js" > rieng.txt 2>&1; r1=$?
+          node --test "test-thu-tu/*.test.js" > ca.txt 2>&1; r2=$?
+          echo "chay RIENG 'gio moi phai rong': exit $r1 · $(grep -E '^# (pass|fail)' rieng.txt | tr '\n' ' ')"
+          echo "chay CA TEP (sau 'them mon'):   exit $r2 · $(grep -E '^# (pass|fail)' ca.txt | tr '\n' ' ')"
+          echo "chay 5 lan ca tep:"; for i in 1 2 3 4 5; do node --test "test-thu-tu/*.test.js" >/dev/null 2>&1; echo -n "$? "; done; echo

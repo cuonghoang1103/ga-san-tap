@@ -53,7 +53,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DIGEST: ${{ needs.dung-anh.outputs.digest }}
         run: |
-          gh attestation verify "oci://$ANH@$DIGEST" --repo "$GITHUB_REPOSITORY"
+          gh attestation verify "oci://$ANH@$DIGEST" --repo "$GITHUB_REPOSITORY" \
+            --format json > kq.json
+          echo "verify exit=$?"
+          jq '.[0].verificationResult.signature.certificate
+              | {sourceRepositoryRef, sourceRepositoryDigest, buildSignerURI, runnerEnvironment}' kq.json
+          jq -r '.[0].verificationResult.statement.predicate.buildDefinition.externalParameters.workflow' kq.json
       - name: Chay anh vua keo ve
         env:
           DIGEST: ${{ needs.dung-anh.outputs.digest }}
@@ -96,6 +101,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           F=$(ls ./*.tgz)
-          gh attestation verify "$F" --repo "$GITHUB_REPOSITORY"
+          gh attestation verify "$F" --repo "$GITHUB_REPOSITORY" --format json \
+            | jq -r '.[0].verificationResult.statement.subject[0] | "\(.name) \(.digest.sha256)"'
+          sha256sum "$F"
           cp "$F" sua.tgz && printf 'x' >> sua.tgz
+          sha256sum sua.tgz
           gh attestation verify sua.tgz --repo "$GITHUB_REPOSITORY" || echo "=> tep bi sua: KHONG co attestation khop (dung nhu mong doi)"

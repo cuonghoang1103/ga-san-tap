@@ -1,3 +1,4 @@
+// PR #10: them /api/bac-si — test tich hop dem lich theo bac si
 // Test tich hop: chay voi Postgres THAT (service container trong CI).
 // Khong co DATABASE_URL (vd tren may khong bat Postgres) thi BO QUA — nhung CI luon dat bien nay.
 import { test, before, after } from 'node:test';

@@ -1,0 +1,30 @@
+name: ch03 context sai cho
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-sai-cho.yml']
+permissions:
+  contents: read
+env:
+  MAY: ubuntu-24.04
+  CHEP: ${{ env.MAY }}
+jobs:
+  runner-trong-if-job:
+    if: runner.os == 'Linux'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo a
+  env-trong-runs-on:
+    runs-on: ${{ env.MAY }}
+    steps:
+      - run: echo b
+  secrets-trong-if-buoc:
+    runs-on: ubuntu-24.04
+    steps:
+      - if: secrets.KHONG_CO != ''
+        run: echo c
+  nhay-kep:
+    if: github.ref == "refs/heads/main"
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo d

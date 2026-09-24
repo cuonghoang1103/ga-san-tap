@@ -1,0 +1,57 @@
+name: ch03 luc nao tinh cai gi
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-thoi-diem.yml']
+permissions:
+  contents: read
+env:
+  NHAN_WF: gia-tri-muc-workflow
+jobs:
+  ke-hoach:
+    runs-on: ubuntu-24.04
+    outputs:
+      ds: ${{ steps.tim.outputs.ds }}
+      phut: ${{ steps.tim.outputs.phut }}
+    steps:
+      - id: tim
+        run: |
+          echo 'ds=["ubuntu-24.04","ubuntu-24.04-arm"]' >> "$GITHUB_OUTPUT"
+          echo 'phut=5' >> "$GITHUB_OUTPUT"
+  bo-qua:
+    needs: ke-hoach
+    if: needs.ke-hoach.outputs.phut == '99'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo khong bao gio
+  chay:
+    needs: ke-hoach
+    if: github.ref_name == 'ch03-bieu-thuc'
+    name: ${{ format('chay tren {0}', matrix.may) }}
+    strategy:
+      matrix:
+        may: ${{ fromJSON(needs.ke-hoach.outputs.ds) }}
+    runs-on: ${{ matrix.may }}
+    timeout-minutes: ${{ fromJSON(needs.ke-hoach.outputs.phut) }}
+    env:
+      NHAN_JOB: ${{ format('{0}/{1}', matrix.may, github.run_number) }}
+    steps:
+      - id: dau
+        name: Buoc dau ghi output
+        run: |
+          echo "luc=$(date -u +%H:%M:%S.%N | cut -c1-12)" >> "$GITHUB_OUTPUT"
+          echo "may=$(uname -m)" >> "$GITHUB_OUTPUT"
+      - name: ${{ format('Buoc sau thay {0} luc {1}', steps.dau.outputs.may, steps.dau.outputs.luc) }}
+        env:
+          TU_BUOC_TRUOC: ${{ steps.dau.outputs.luc }}
+          TEMP: ${{ runner.temp }}
+          OS: ${{ runner.os }}-${{ runner.arch }}
+        run: |
+          echo "NHAN_WF=$NHAN_WF"
+          echo "NHAN_JOB=$NHAN_JOB"
+          echo "TU_BUOC_TRUOC=$TU_BUOC_TRUOC"
+          echo "TEMP=$TEMP  OS=$OS"
+          echo "hashFiles luc nay = ${{ hashFiles('ghi-luc-chay.txt') }}"
+      - run: echo xin-chao > ghi-luc-chay.txt
+      - name: hashFiles tinh LUC BUOC CHAY
+        run: echo "hashFiles bay gio = ${{ hashFiles('ghi-luc-chay.txt') }}"

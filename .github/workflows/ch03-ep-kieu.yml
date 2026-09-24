@@ -1,0 +1,80 @@
+name: ch03 ep kieu va ham
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-ep-kieu.yml', 'ch03/**']
+permissions:
+  contents: read
+jobs:
+  ep-kieu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: So sanh va ep kieu
+        env:
+          E01: ${{ '0' == 0 }}
+          E02: ${{ '' == 0 }}
+          E03: ${{ null == 0 }}
+          E04: ${{ null == '' }}
+          E05: ${{ 'abc' == 0 }}
+          E06: ${{ 'abc' != 0 }}
+          E07: ${{ 'abc' == 'ABC' }}
+          E08: ${{ 'false' == false }}
+          E09: ${{ 'true' == true }}
+          E10: ${{ '1.0' == 1 }}
+          E11: ${{ '0x1' == 1 }}
+          E12: ${{ ' 1 ' == 1 }}
+          E13: ${{ '1e2' == 100 }}
+          E14: ${{ 'abc' < 1 }}
+          E15: ${{ 'abc' >= 1 }}
+          E16: ${{ 'b' > 'A' }}
+          E17: ${{ fromJSON('[]') == fromJSON('[]') }}
+          E18: ${{ 0xff }}
+          E19: ${{ 1 == 1.0 }}
+          E20: ${{ github.ref_name == 'CH03-BIEU-THUC' }}
+        run: |
+          for i in $(seq -w 1 20); do v="E$i"; printf '%s = [%s]\n' "$v" "${!v}"; done
+      - name: Dung sai va toan tu logic
+        env:
+          T01: ${{ !'' }}
+          T02: ${{ !'false' }}
+          T03: ${{ !'0' }}
+          T04: ${{ !0 }}
+          T05: ${{ !null }}
+          T06: ${{ !fromJSON('[]') }}
+          T07: ${{ 'a' && 'b' }}
+          T08: ${{ '' || 'mac-dinh' }}
+          T09: ${{ 0 || 'mac-dinh' }}
+          T10: ${{ 'false' || 'mac-dinh' }}
+          T11: ${{ true && '' || 'X' }}
+          T12: ${{ false && '' || 'X' }}
+          T13: ${{ github.event.khong.co.gi }}
+          T14: ${{ toJSON(github.event.khong.co.gi) }}
+          T15: ${{ github.event.khong.co.gi == null }}
+          T16: ${{ github.event.khong.co.gi == '' }}
+        run: |
+          for i in $(seq -w 1 16); do v="T$i"; printf '%s = [%s]\n' "$v" "${!v}"; done
+      - name: Ham
+        env:
+          H01: ${{ contains('Hello world', 'LLO') }}
+          H02: ${{ contains(fromJSON('["push","pull_request"]'), 'PUSH') }}
+          H03: ${{ contains(fromJSON('["push","pull_request"]'), 'pull') }}
+          H04: ${{ startsWith(github.ref, 'REFS/HEADS/') }}
+          H05: ${{ endsWith(github.ref, '-thuc') }}
+          H06: ${{ format('{0}-{1}-{2}', 'v', 1, true) }}
+          H07: ${{ format('{{khong thay}} {0}', 'x') }}
+          H08: ${{ format('[{0}]', null) }}
+          H09: ${{ join(fromJSON('[1,2,3]'), '+') }}
+          H10: ${{ join(fromJSON('["a","b"]')) }}
+          H11: ${{ toJSON(fromJSON('{"a":[1,2],"b":null}')) }}
+          H12: ${{ fromJSON('3') == 3 }}
+          H13: ${{ fromJSON('true') == 'true' }}
+          H14: ${{ case(github.ref_name == 'main', 'production', startsWith(github.ref_name, 'ch03'), 'thu-nghiem', 'khac') }}
+          H15: ${{ hashFiles('ch03/a.txt') }}
+          H16: ${{ hashFiles('ch03/a.txt', 'ch03/b.txt') }}
+          H17: ${{ hashFiles('ch03/b.txt', 'ch03/a.txt') }}
+          H18: ${{ hashFiles('ch03/khong-co/**') }}
+          H19: ${{ format('cache-{0}-{1}', runner.os, hashFiles('ch03/khong-co/**')) }}
+          H20: ${{ join(github.event.commits.*.author.name, ', ') }}
+        run: |
+          for i in $(seq -w 1 20); do v="H$i"; printf '%s = [%s]\n' "$v" "${!v}"; done

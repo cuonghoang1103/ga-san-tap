@@ -1,0 +1,28 @@
+name: ch03 bam huy
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-huy.yml']
+permissions:
+  contents: read
+jobs:
+  cho-huy:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: ngu 300 giay (se bi huy)
+        run: sleep 300
+      - name: "if success()"
+        if: success()
+        run: echo chay
+      - name: "if failure()"
+        if: failure()
+        run: echo chay
+      - name: "if always()"
+        if: always()
+        run: echo "chay, job.status=${{ job.status }}"
+      - name: "if cancelled()"
+        if: cancelled()
+        run: echo "chay, job.status=${{ job.status }}"
+      - name: "if !cancelled()"
+        if: '!cancelled()'
+        run: echo chay

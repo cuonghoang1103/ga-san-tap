@@ -1,0 +1,16 @@
+name: ch03 if no
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-if-no.yml']
+permissions:
+  contents: read
+jobs:
+  thu:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "truoc"
+        run: echo truoc
+      - name: "if: no"
+        if: no
+        run: echo chay

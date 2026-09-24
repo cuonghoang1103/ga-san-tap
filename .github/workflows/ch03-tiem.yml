@@ -1,0 +1,24 @@
+name: ch03 tiem lenh qua tieu de PR
+on:
+  pull_request:
+    branches: [ch03-bieu-thuc]
+permissions:
+  contents: read
+jobs:
+  de-bi-tiem:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: HONG - ghep thang tieu de va ten nhanh vao run
+        run: |
+          echo "Tieu de PR: ${{ github.event.pull_request.title }}"
+          echo "Nhanh: ${{ github.head_ref }}"
+  da-va:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: DUNG - dua qua env, shell doc nhu du lieu
+        env:
+          TIEU_DE: ${{ github.event.pull_request.title }}
+          NHANH: ${{ github.head_ref }}
+        run: |
+          echo "Tieu de PR: $TIEU_DE"
+          echo "Nhanh: $NHANH"

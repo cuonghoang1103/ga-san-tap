@@ -1,0 +1,19 @@
+name: ch03 if rong
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-if-rong.yml']
+permissions:
+  contents: read
+jobs:
+  thu:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "hong"
+        run: exit 1
+      - name: "if: ''"
+        if: ''
+        run: echo chay
+      - name: "if: always()"
+        if: always()
+        run: echo chay

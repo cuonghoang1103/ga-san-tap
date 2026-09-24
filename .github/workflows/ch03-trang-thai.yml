@@ -1,0 +1,52 @@
+name: ch03 ham trang thai
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-trang-thai.yml']
+permissions:
+  contents: read
+jobs:
+  sau-khi-hong:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: dung-thu (continue-on-error)
+        id: dung_thu
+        continue-on-error: true
+        run: exit 3
+      - name: "A sau dung-thu: mac dinh success()"
+        run: echo "outcome=${{ steps.dung_thu.outcome }} conclusion=${{ steps.dung_thu.conclusion }}"
+      - name: "B if steps.dung_thu.conclusion == 'failure'"
+        if: steps.dung_thu.conclusion == 'failure'
+        run: echo chay
+      - name: "C if steps.dung_thu.outcome == 'failure'"
+        if: steps.dung_thu.outcome == 'failure'
+        run: echo chay
+      - name: hong-that
+        id: hong
+        run: exit 1
+      - name: "D mac dinh (success())"
+        run: echo chay
+      - name: "E if success()"
+        if: success()
+        run: echo chay
+      - name: "F if failure()"
+        if: failure()
+        run: echo chay
+      - name: "G if always()"
+        if: always()
+        run: echo chay
+      - name: "H if cancelled()"
+        if: cancelled()
+        run: echo chay
+      - name: "I if !cancelled()"
+        if: '!cancelled()'
+        run: echo chay
+      - name: "J if github.ref_name == 'ch03-bieu-thuc'"
+        if: github.ref_name == 'ch03-bieu-thuc'
+        run: echo chay
+      - name: "K if always() && github.ref_name == 'ch03-bieu-thuc'"
+        if: always() && github.ref_name == 'ch03-bieu-thuc'
+        run: echo chay
+      - name: "L if failure() && steps.hong.outcome == 'failure'"
+        if: failure() && steps.hong.outcome == 'failure'
+        run: echo "job.status = ${{ job.status }}"

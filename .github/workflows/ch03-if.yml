@@ -1,0 +1,62 @@
+name: ch03 if viet kieu nao
+on:
+  push:
+    branches: [ch03-bieu-thuc]
+    paths: ['.github/workflows/ch03-if.yml']
+permissions:
+  contents: read
+jobs:
+  cach-viet:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: "01 if: false"
+        if: false
+        run: echo chay
+      - name: "02 if: 'false'"
+        if: 'false'
+        run: echo chay
+      - name: "03 if: \"false\""
+        if: "false"
+        run: echo chay
+      - name: "04 if: $ {{ false }}"
+        if: ${{ false }}
+        run: echo chay
+      - name: "05 if: $ {{ 'false' }}"
+        if: ${{ 'false' }}
+        run: echo chay
+      - name: "06 if: 0"
+        if: 0
+        run: echo chay
+      - name: "07 if: '0'"
+        if: '0'
+        run: echo chay
+      - name: "08 if: $ {{ '0' }}"
+        if: ${{ '0' }}
+        run: echo chay
+      - name: "09 if: $ {{ false }} == true"
+        if: ${{ false }} == true
+        run: echo chay
+      - name: "10 if: $ {{ github.ref_name }} == 'khong-phai-nhanh-nay'"
+        if: ${{ github.ref_name }} == 'khong-phai-nhanh-nay'
+        run: echo chay
+      - name: "11 if: github.ref_name == 'khong-phai-nhanh-nay'"
+        if: github.ref_name == 'khong-phai-nhanh-nay'
+        run: echo chay
+      - name: "12 if: github.ref == 'ch03-bieu-thuc'"
+        if: github.ref == 'ch03-bieu-thuc'
+        run: echo chay
+      - name: "13 if: github.ref_name == 'CH03-BIEU-THUC'"
+        if: github.ref_name == 'CH03-BIEU-THUC'
+        run: echo chay
+      - name: "14 if: '!cancelled()'"
+        if: '!cancelled()'
+        run: echo chay
+      - name: "15 if: $ {{ !cancelled() }}"
+        if: ${{ !cancelled() }}
+        run: echo chay
+      - name: "16 if: github.event.khong.co"
+        if: github.event.khong.co
+        run: echo chay
+      - name: "17 if: toJSON(github.event.khong.co)"
+        if: toJSON(github.event.khong.co)
+        run: echo chay

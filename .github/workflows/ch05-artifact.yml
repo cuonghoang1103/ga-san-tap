@@ -9,7 +9,8 @@ jobs:
   tao:
     runs-on: ubuntu-24.04
     outputs:
-      id-tar: ${{ steps.tar.outputs.artifact-id }}
+      id-cu: ${{ steps.tar.outputs.artifact-id }}
+      id-moi: ${{ steps.ghide.outputs.artifact-id }}
     steps:
       - name: Sinh 5000 file giong-mot-phan (~30 MB) + mot tarball cung noi dung
         run: |
@@ -40,6 +41,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with: { name: mot-tarball, path: mot.tgz, retention-days: 1 }
       - name: Trung ten nhung overwrite true
+        id: ghide
         uses: actions/upload-artifact@v7
         with: { name: mot-tarball, path: mot.tgz, retention-days: 1, overwrite: true }
 
@@ -65,9 +67,13 @@ jobs:
       - name: Gom ba nhanh ma tran vao MOT thu muc
         uses: actions/download-artifact@v8
         with: { pattern: 'ket-qua-*', merge-multiple: true, path: ve/gom }
-      - name: Tai theo ID (output cua job tao)
+      - name: Tai theo ID CU (truoc overwrite)
+        continue-on-error: true
         uses: actions/download-artifact@v8
-        with: { artifact-ids: '${{ needs.tao.outputs.id-tar }}', path: ve/theo-id }
+        with: { artifact-ids: '${{ needs.tao.outputs.id-cu }}', path: ve/theo-id-cu }
+      - name: Tai theo ID MOI (sau overwrite)
+        uses: actions/download-artifact@v8
+        with: { artifact-ids: '${{ needs.tao.outputs.id-moi }}', path: ve/theo-id }
       - name: Xem
         run: |
           find ve -maxdepth 2 | sort | head -20
@@ -77,3 +83,43 @@ jobs:
         continue-on-error: true
         uses: actions/download-artifact@v8
         with: { name: khong-co-dau, path: ve/x }
+
+  quyen-va-file-an:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          mkdir -p goi && printf '#!/bin/sh\necho chay duoc\n' > goi/chay.sh && chmod +x goi/chay.sh
+          echo "gia-tri-thu-khong-that-123" > goi/.env-thu
+          ls -la goi
+      - uses: actions/upload-artifact@v7
+        with: { name: goi-zip, path: goi/, retention-days: 1 }
+      - run: tar -cf goi.tar goi
+      - uses: actions/upload-artifact@v7
+        with: { name: goi-tar, path: goi.tar, retention-days: 1 }
+      - uses: actions/download-artifact@v8
+        with: { name: goi-zip, path: ve-zip }
+      - uses: actions/download-artifact@v8
+        with: { name: goi-tar, path: ve-tar }
+      - run: |
+          echo "--- qua zip ---"; ls -la ve-zip
+          echo "--- qua tar ---"; tar -xf ve-tar/goi.tar -C ve-tar && ls -la ve-tar/goi
+
+  hinh-dang:
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: ch05/app } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22', cache: npm, cache-dependency-path: ch05/app/package-lock.json }
+      - run: npm ci --no-audit --no-fund 2>&1 | tail -1
+      - name: Dong goi node_modules thanh 1 file
+        run: |
+          echo "node_modules: $(du -sh node_modules | cut -f1), $(find node_modules -type f | wc -l) file"
+          /usr/bin/time -f "tar+zstd: %e giay" tar -I 'zstd -3 -T0' -cf ../nm.tar.zst node_modules
+          ls -la ../nm.tar.zst
+      - name: Tai len node_modules NGUYEN CAY (28k file)
+        uses: actions/upload-artifact@v7
+        with: { name: nm-cay, path: ch05/app/node_modules/, retention-days: 1, include-hidden-files: true }
+      - name: Tai len node_modules 1 file (archive false)
+        uses: actions/upload-artifact@v7
+        with: { path: ch05/nm.tar.zst, archive: false, retention-days: 1 }

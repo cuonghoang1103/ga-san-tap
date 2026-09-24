@@ -42,7 +42,7 @@ jobs:
         id: b
         uses: actions/cache/restore@v5
         with:
-          path: rk2
+          path: rk
           key: 'ch05-khong-co-${{ github.run_id }}'
           restore-keys: |
             ch05-rk-${{ github.run_id }}-a
@@ -51,7 +51,7 @@ jobs:
       - name: Khoa chinh xac trung
         id: c
         uses: actions/cache/restore@v5
-        with: { path: rk3, key: 'ch05-rk-${{ github.run_id }}-b' }
+        with: { path: rk, key: 'ch05-rk-${{ github.run_id }}-b' }
       - run: echo "cache-hit=${{ steps.c.outputs.cache-hit }}  matched=${{ steps.c.outputs.cache-matched-key }}"
 
   bat-bien:

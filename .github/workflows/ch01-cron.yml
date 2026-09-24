@@ -2,7 +2,9 @@
 name: ch01 cron moi 5 phut
 on:
   schedule:
-    - cron: '*/5 * * * *'     # UTC, moi 5 phut
+    - cron: '*/5 * * * *'           # UTC, moi 5 phut
+    - cron: '50 17 * * *'           # 17:50 ... theo mui gio nao?
+      timezone: 'Asia/Ho_Chi_Minh'  # = 10:50 UTC
   workflow_dispatch:
 jobs:
   do:
@@ -10,4 +12,5 @@ jobs:
     steps:
       - run: |
           echo "su kien  : $GITHUB_EVENT_NAME"
+          echo "lich     : ${{ github.event.schedule }}"
           echo "gio chay : $(date -u +%H:%M:%S) UTC"

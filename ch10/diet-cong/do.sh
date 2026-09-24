@@ -38,13 +38,21 @@ echo "=== (3) pkill -f \"$PAT\" ==="
 echo "pgrep -f khop:"; pgrep -af "$PAT" | grep -v do.sh | cut -c1-100
 pkill -f "$PAT"; echo "pkill rc=$?"
 sleep 3
-echo "sau 3 giay, ai con giu cong $P: $(lsof -ti:$P | tr '\n' ' ' || true)"
+echo "sau 3 giay, ai con giu cong $P: $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*' || echo KHONG AI)"
 ps -eo pid,ppid,comm,args | awk '/next|server\.js/' | grep -v -e awk -e do.sh | cut -c1-110
 echo "=== (4) khoi dong lai ngay ==="
 bat 2; sleep 4; echo "srv2.log:"; tail -n 6 srv2.log | cut -c1-120
 echo "moi.txt luc nay: HTTP $(ma moi.txt)"
 echo "=== (5) diet theo CONG ==="
+echo "lsof la: $(command -v lsof) · $(lsof -v 2>&1 | grep -m1 -i revision)"
+echo "lsof -ti:$P (user $(whoami)): '$(lsof -ti:$P 2>&1)' rc=$?"
+echo "lsof -nP -iTCP:$P -sTCP:LISTEN:"; lsof -nP -iTCP:$P -sTCP:LISTEN 2>&1 | head -3
+echo "sudo lsof -ti:$P: '$(sudo lsof -ti:$P 2>&1 | tr '\n' ' ')'"
+echo "ss -ltnpH sport = :$P → $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*')"
+echo "fuser $P/tcp → '$(fuser $P/tcp 2>/dev/null)'"
 lsof -ti:$P | xargs -r kill -9; sleep 1
-echo "lsof -ti:$P sau khi diet: '$(lsof -ti:$P || true)'"
-bat 3; cho && echo "server 3 len" ; echo "moi.txt sau khi khoi dong lai: HTTP $(ma moi.txt)"
-lsof -ti:$P | xargs -r kill -9
+echo "sau 'lsof -ti:$P | xargs -r kill -9': ss con thay $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*' || echo 'KHONG AI')"
+fuser -k -KILL $P/tcp >/dev/null 2>&1; sleep 1
+echo "sau 'fuser -k $P/tcp': ss con thay $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*' || echo 'KHONG AI')"
+bat 3; cho && echo "server 3 len: $(ss -ltnpH "sport = :$P" | grep -o 'pid=[0-9]*')"; echo "moi.txt sau khi khoi dong lai: HTTP $(ma moi.txt)"
+fuser -k -KILL $P/tcp >/dev/null 2>&1 || true

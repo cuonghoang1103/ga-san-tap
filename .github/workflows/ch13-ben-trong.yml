@@ -46,8 +46,9 @@ jobs:
           echo "--- cong dang NGHE (listen) cua tien trinh runner:"
           sudo ss -tlnp 2>/dev/null | grep -i runner || echo "(khong co — runner khong mo cong nao)"
       - name: Nhat ky _diag cua runner
+        timeout-minutes: 2
         run: |
-          d=$(sudo find / -type d -name _diag -path "*actions-runner*" 2>/dev/null | head -1)
+          d=$(sudo find /home/runner /opt -maxdepth 5 -type d -name _diag 2>/dev/null | head -1)
           echo "_diag = $d"; sudo ls "$d" 2>/dev/null | head -20
           for f in $(sudo ls "$d" 2>/dev/null | grep -E '^(Runner|Worker)_' | head -3); do
             echo "=== $f"

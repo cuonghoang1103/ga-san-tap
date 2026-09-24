@@ -12,6 +12,9 @@ P migrate deploy
 echo "## 3. commit sau (21:12): migrate deploy lan nua"
 P migrate deploy
 Q $DATABASE_URL "select migration_name, (finished_at is not null) as xong, (rolled_back_at is not null) as rolled_back, left(logs, 60) as logs from _prisma_migrations order by started_at"
+echo "## 3b. DO TRUOC KHI QUYET (luc P3009): lich su migrations → DB that, co shadow"
+P migrate diff --from-migrations ./prisma/migrations --to-url "$DATABASE_URL" --shadow-database-url "$BASE/shadow" --script
+P migrate status
 echo "## 4. 'va' 684742b2 (21:21): resolve --rolled-back MOI migration, || true"
 for d in prisma/migrations/*/; do P migrate resolve --rolled-back "$(basename "$d")" || true; done
 echo "## 5. 'va' b2aee39e: sua migration thanh IF NOT EXISTS, deploy lai"

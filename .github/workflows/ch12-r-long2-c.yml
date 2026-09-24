@@ -1,0 +1,17 @@
+name: ch12-r-long2-c
+on:
+  workflow_call:
+    secrets:
+      mot:
+        required: false
+jobs:
+  c-nhin:
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          S: ${{ toJSON(secrets) }}
+          MOT: ${{ secrets.mot }}
+        run: |
+          echo "tang C · secret nhan duoc:"
+          jq -c 'keys' <<<"$S"
+          echo "do dai mot = ${#MOT}"

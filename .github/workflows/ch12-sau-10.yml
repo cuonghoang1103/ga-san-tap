@@ -1,0 +1,12 @@
+# Giới hạn lồng: bên gọi + 9 tầng reusable = 10 tầng (docs: tối đa 10). Phải CHẠY.
+name: ch12-sau-10
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-sau-*.yml', '.github/workflows/ch12-r-sau-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vao:
+    uses: ./.github/workflows/ch12-r-sau-02.yml

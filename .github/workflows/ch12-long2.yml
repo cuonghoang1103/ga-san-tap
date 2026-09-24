@@ -1,0 +1,15 @@
+# Chuỗi lồng, lần 2 — secret CÓ giá trị (chuỗi thường giả). A -> B (2 secret) ; B -> C bằng inherit ; B -> C chỉ 1 secret.
+name: ch12-long2
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-long2.yml', '.github/workflows/ch12-r-long2-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  a:
+    uses: ./.github/workflows/ch12-r-long2-b.yml
+    secrets:
+      mot: gia-tri-thu-mot-111
+      hai: gia-tri-thu-hai-2222

@@ -1,0 +1,21 @@
+name: ch12 dem tep
+description: Dem tep theo duoi trong mot thu muc, ghi output + job summary, doc repo bang Octokit
+author: cuonghoang1103
+inputs:
+  thu-muc:
+    description: Thu muc can dem
+    default: '.'
+  token:
+    description: Token de goi API (mac dinh la GITHUB_TOKEN cua job)
+    default: ${{ github.token }}
+outputs:
+  tong:
+    description: Tong so tep
+  nhieu-nhat:
+    description: Duoi tep xuat hien nhieu nhat
+runs:
+  using: node24
+  main: dist/index.js
+branding:
+  icon: hash
+  color: blue

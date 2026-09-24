@@ -1,0 +1,6 @@
+name: ch12-r-sau-07
+on:
+  workflow_call:
+jobs:
+  tang-07:
+    uses: ./.github/workflows/ch12-r-sau-08.yml

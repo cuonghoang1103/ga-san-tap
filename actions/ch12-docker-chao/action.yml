@@ -1,0 +1,14 @@
+name: ch12 docker chao
+description: Docker action — mang theo cong cu rieng (jq) trong anh, chi chay tren Linux
+inputs:
+  ten:
+    description: Ten nguoi duoc chao
+    required: true
+outputs:
+  loi-chao:
+    description: Cau chao
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.ten }}

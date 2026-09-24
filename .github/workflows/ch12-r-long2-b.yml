@@ -1,0 +1,24 @@
+name: ch12-r-long2-b
+on:
+  workflow_call:
+    secrets:
+      mot:
+        required: true
+      hai:
+        required: true
+jobs:
+  b-nhin:
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          S: ${{ toJSON(secrets) }}
+        run: |
+          echo "tang B · secret nhan duoc:"
+          jq -c 'keys' <<<"$S"
+  c-inherit:
+    uses: ./.github/workflows/ch12-r-long2-c.yml
+    secrets: inherit
+  c-mot:
+    uses: ./.github/workflows/ch12-r-long2-c.yml
+    secrets:
+      mot: ${{ secrets.mot }}

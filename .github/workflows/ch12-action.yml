@@ -1,0 +1,80 @@
+# JavaScript action + Docker action — Chương 12, bài 12.3: test action ngay trong repo của nó.
+name: ch12-action
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-action.yml', 'actions/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  js-ba-he:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: d
+        uses: ./actions/ch12-dem-tep
+        with:
+          thu-muc: actions
+      - name: Kiem output (day moi la "test" cua action)
+        shell: bash
+        env:
+          TONG: ${{ steps.d.outputs.tong }}
+          NHIEU: ${{ steps.d.outputs.nhieu-nhat }}
+        run: |
+          echo "tong=$TONG nhieu-nhat=$NHIEU"
+          test "$TONG" -gt 0
+          test -n "$NHIEU"
+
+  kiem-dist:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - working-directory: actions/ch12-dem-tep
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+          npm run build
+      - name: dist/ da commit co khop voi ban dung lai khong?
+        run: git diff --stat --exit-code actions/ch12-dem-tep/dist/
+
+  node20:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./actions/ch12-node20
+
+  docker:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: dc
+        uses: ./actions/ch12-docker-chao
+        with:
+          ten: Cuong
+      - env:
+          LC: ${{ steps.dc.outputs.loi-chao }}
+        run: echo "output loi-chao = $LC"
+
+  quen-dong-goi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./actions/ch12-quen-dong-goi

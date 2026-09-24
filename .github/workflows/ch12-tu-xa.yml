@@ -1,0 +1,28 @@
+# Gọi reusable workflow và composite action TỪ XA, ghim SHA đầy đủ (commit 55b77f9 của chính sân tập).
+name: ch12-tu-xa
+on:
+  push:
+    branches: [ch12-tai-su-dung]
+    paths: ['.github/workflows/ch12-tu-xa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reusable-ghim-sha:
+    uses: cuonghoang1103/ga-san-tap/.github/workflows/ch12-r-dung.yml@55b77f9d2dc0ccf8376a3683bf36d9a152a1dc94
+    with:
+      moi-truong: tu-xa
+    secrets:
+      ma-thu: gia-tri-thu-khong-that-123
+  composite-khong-checkout:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: cb
+        uses: cuonghoang1103/ga-san-tap/.github/actions/ch12-chuan-bi@55b77f9d2dc0ccf8376a3683bf36d9a152a1dc94
+        with:
+          bo-qua-cai: 'true'
+      - env:
+          NODE_V: ${{ steps.cb.outputs.node }}
+        run: |
+          echo "node = $NODE_V"
+          echo "workspace co gi: $(ls -A | wc -l) muc (chua checkout)"

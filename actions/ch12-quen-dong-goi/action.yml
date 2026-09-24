@@ -1,0 +1,6 @@
+# CỐ Ý SAI — trỏ thẳng vào mã nguồn import @actions/core mà KHÔNG đóng gói, KHÔNG commit node_modules.
+name: ch12 quen dong goi
+description: Minh hoa loi quen ncc
+runs:
+  using: node24
+  main: index.js

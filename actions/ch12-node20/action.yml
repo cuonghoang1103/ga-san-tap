@@ -1,0 +1,5 @@
+name: ch12 node20
+description: Action JS khai runs.using node20 — xem runner xu ly the nao (09/2026)
+runs:
+  using: node20
+  main: index.js

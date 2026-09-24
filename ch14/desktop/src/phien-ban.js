@@ -4,3 +4,4 @@ export const moiHon = (a, b) => {
   for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
   return false;
 };
+export const kenh = 'on-dinh';

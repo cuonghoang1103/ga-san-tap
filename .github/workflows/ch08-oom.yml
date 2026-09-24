@@ -1,0 +1,27 @@
+# Chuong 8 — 137 KHONG in loi nao. Hoi Docker xem ai giet: OOMKilled.
+name: ch08-oom
+on:
+  push:
+    branches: [ch08-do]
+    paths: ['.github/workflows/ch08-oom.yml']
+permissions:
+  contents: read
+jobs:
+  oom:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Container 128 MB, Node doi heap 4 GB — giu container lai de hoi
+        shell: bash
+        run: |
+          set +e
+          docker run --name ga08-oom -m 128m --memory-swap 128m node:22-alpine \
+            node --max-old-space-size=4096 -e 'const a=[]; for(;;) a.push(new Array(1e6).fill(1));'
+          rc=$?
+          echo "exit cua docker run: $rc"
+          docker inspect ga08-oom --format 'OOMKilled={{.State.OOMKilled}} ExitCode={{.State.ExitCode}}'
+          docker rm ga08-oom >/dev/null
+          echo "--- cung container, KHONG ep heap: Node tu doc gioi han cgroup"
+          docker run --rm -m 128m node:22-alpine node -e 'console.log("heap limit MB:", (require("v8").getHeapStatistics().heap_size_limit/1048576).toFixed(0))'
+          docker run --rm -m 128m node:22-alpine node -e 'const a=[]; for(;;) a.push(new Array(1e6).fill(1));' 2>&1 | grep -E "FATAL|heap" | head -2
+          echo "exit khi KHONG ep heap: ${PIPESTATUS[0]}"
+          exit $rc

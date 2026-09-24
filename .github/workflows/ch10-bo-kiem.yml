@@ -1,0 +1,52 @@
+# Chuong 10 · ca 3 — BO KIEM HONG (11/06 → 30/07/2026): chot kiem goi wget trong anh
+# khong co wget. Rồi "kiem bo kiem": chay moi bo kiem qua duong SAI truoc khi tin no.
+name: ch10-bo-kiem
+on:
+  push:
+    branches: [ch10-chan-doan]
+    paths: ['ch10/bo-kiem/**', '.github/workflows/ch10-bo-kiem.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chot-kiem:
+    strategy:
+      fail-fast: false
+      matrix:
+        ban: [kiem-cu, kiem-moi]
+    name: chot kiem frontend (${{ matrix.ban }})
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ch10/bo-kiem
+    steps:
+      - uses: actions/checkout@v5
+      - name: Dung "frontend" tu anh node:22-slim (giong Dockerfile that)
+        run: |
+          docker run -d --name ch10-web-song -v "$PWD/web.js:/web.js:ro" node:22-slim node /web.js
+          sleep 2
+          docker exec ch10-web-song sh -c 'for t in wget curl node; do printf "%-5s " $t; command -v $t || echo "(KHONG CO)"; done'
+      - name: Checking frontend (${{ matrix.ban }})
+        run: |
+          t0=$(date +%s)
+          ./${{ matrix.ban }}.sh ch10-web-song; rc=$?
+          echo "rc=$rc · mat $(( $(date +%s) - t0 )) giay"
+          exit $rc
+      - name: Buoc sau cua deploy van chay
+        run: echo "deploy di tiep → smoke-test route, reload nginx…"
+  kiem-bo-kiem:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ch10/bo-kiem
+    steps:
+      - uses: actions/checkout@v5
+      - name: Ba kich ban — song, loi 500, container chet
+        run: |
+          docker run -d --name ch10-web-song   -v "$PWD/web.js:/web.js:ro" node:22-slim node /web.js
+          docker run -d --name ch10-web-loi500 -e MODE=loi500 -v "$PWD/web.js:/web.js:ro" node:22-slim node /web.js
+          docker run -d --name ch10-web-chet   -v "$PWD/web.js:/web.js:ro" node:22-slim node /web.js
+          sleep 2; docker stop -t 1 ch10-web-chet >/dev/null
+          docker ps -a --format '{{.Names}}\t{{.Status}}'
+      - name: Chay 4 bo kiem x 3 kich ban
+        run: ./kiem-bo-kiem.sh

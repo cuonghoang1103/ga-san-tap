@@ -1,0 +1,79 @@
+# Chương 5 · bài 5.4 — artifact: nhiều file vs một tarball, tên trùng, overwrite, archive:false, tải giữa job.
+name: ch05 · artifact
+on:
+  push:
+    branches: [ch05-cache]
+    paths: ['.github/workflows/ch05-artifact.yml']
+  workflow_dispatch:
+jobs:
+  tao:
+    runs-on: ubuntu-24.04
+    outputs:
+      id-tar: ${{ steps.tar.outputs.artifact-id }}
+    steps:
+      - name: Sinh 5000 file giong-mot-phan (~30 MB) + mot tarball cung noi dung
+        run: |
+          mkdir -p nhieu
+          python3 - <<'PY'
+          import os, random
+          random.seed(5)
+          chung = ("export function helper(x) { return x * 2 }\n" * 40)
+          for i in range(5000):
+              rieng = "".join(random.choice("abcdefghijklmnopqrstuvwxyz0123456789 \n") for _ in range(3000))
+              rac = os.urandom(600).hex()
+              open(f"nhieu/f{i:04d}.js", "w").write(chung + rieng + rac)
+          PY
+          du -sh nhieu; ls nhieu | wc -l
+          time tar -czf mot.tgz nhieu && ls -la mot.tgz
+      - name: Tai len 5000 file
+        uses: actions/upload-artifact@v7
+        with: { name: nhieu-file, path: nhieu/, retention-days: 1 }
+      - name: Tai len 1 tarball
+        id: tar
+        uses: actions/upload-artifact@v7
+        with: { name: mot-tarball, path: mot.tgz, retention-days: 1 }
+      - name: Tai len thang (archive false, v7)
+        uses: actions/upload-artifact@v7
+        with: { path: mot.tgz, archive: false, retention-days: 1 }
+      - name: Tai len TRUNG TEN (co y do)
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with: { name: mot-tarball, path: mot.tgz, retention-days: 1 }
+      - name: Trung ten nhung overwrite true
+        uses: actions/upload-artifact@v7
+        with: { name: mot-tarball, path: mot.tgz, retention-days: 1, overwrite: true }
+
+  ma-tran:
+    strategy:
+      matrix: { n: [linux, windows, macos] }
+    runs-on: ubuntu-24.04
+    steps:
+      - run: mkdir -p kq && echo "ket qua tu nhanh ${{ matrix.n }}" > kq/${{ matrix.n }}.txt
+      - uses: actions/upload-artifact@v7
+        with: { name: 'ket-qua-${{ matrix.n }}', path: kq/, retention-days: 1 }
+
+  dung:
+    needs: [tao, ma-tran]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Tai 1 artifact theo ten
+        uses: actions/download-artifact@v8
+        with: { name: mot-tarball, path: ve/tar }
+      - name: Tai 5000 file
+        uses: actions/download-artifact@v8
+        with: { name: nhieu-file, path: ve/nhieu }
+      - name: Gom ba nhanh ma tran vao MOT thu muc
+        uses: actions/download-artifact@v8
+        with: { pattern: 'ket-qua-*', merge-multiple: true, path: ve/gom }
+      - name: Tai theo ID (output cua job tao)
+        uses: actions/download-artifact@v8
+        with: { artifact-ids: '${{ needs.tao.outputs.id-tar }}', path: ve/theo-id }
+      - name: Xem
+        run: |
+          find ve -maxdepth 2 | sort | head -20
+          ls ve/nhieu | wc -l
+          cat ve/gom/*.txt
+      - name: Tai ten KHONG TON TAI (co y do)
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with: { name: khong-co-dau, path: ve/x }

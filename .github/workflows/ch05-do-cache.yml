@@ -1,0 +1,63 @@
+# Chương 5 · bài 5.1 + 5.5 — cache mua được gì, đo trên runner thật.
+# Ba job cài CÙNG một lockfile (743 mục): không cache · cache: npm · actions/cache thẳng node_modules.
+# Lần 1 (push) trượt hết và lưu; lần 2 (gh workflow run) trúng hết.
+name: ch05 · do cache
+on:
+  push:
+    branches: [ch05-cache]
+    paths: ['.github/workflows/ch05-do-cache.yml', 'ch05/app/**']
+  workflow_dispatch:
+defaults:
+  run:
+    working-directory: ch05/app
+jobs:
+  khong-cache:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22' }
+      - name: npm ci (~/.npm lanh)
+        run: |
+          echo "~/.npm truoc: $(du -sh ~/.npm 2>/dev/null | cut -f1 || echo 'khong co')"
+          /usr/bin/time -f "npm ci: %e giay" npm ci --no-audit --no-fund 2>&1 | tail -2
+          echo "node_modules: $(du -sh node_modules | cut -f1), $(find node_modules -type f | wc -l) file"
+          echo "~/.npm sau: $(du -sh ~/.npm | cut -f1)"
+
+  cache-npm:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        id: node
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ch05/app/package-lock.json
+      - name: npm ci (~/.npm tu cache)
+        run: |
+          echo "cache-hit = ${{ steps.node.outputs.cache-hit }}"
+          echo "~/.npm truoc: $(du -sh ~/.npm 2>/dev/null | cut -f1)"
+          /usr/bin/time -f "npm ci: %e giay" npm ci --no-audit --no-fund 2>&1 | tail -2
+
+  cache-node-modules:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with: { node-version: '22' }
+      - name: Khoi phuc node_modules
+        id: nm
+        uses: actions/cache@v5
+        with:
+          path: ch05/app/node_modules
+          key: ch05-nm-${{ runner.os }}-node22-${{ hashFiles('ch05/app/package-lock.json') }}
+      - name: npm ci (chi khi truot)
+        if: steps.nm.outputs.cache-hit != 'true'
+        run: |
+          /usr/bin/time -f "npm ci: %e giay" npm ci --no-audit --no-fund 2>&1 | tail -2
+      - name: Kiem node_modules
+        run: |
+          echo "cache-hit = ${{ steps.nm.outputs.cache-hit }}"
+          echo "node_modules: $(du -sh node_modules | cut -f1), $(find node_modules -type f | wc -l) file"
+          npx tsc --version

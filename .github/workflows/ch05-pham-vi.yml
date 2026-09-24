@@ -1,0 +1,32 @@
+# Chương 5 · bài 5.2 — phạm vi nhánh: ai đọc được cache của ai. Chỉ tra (lookup-only), không tải.
+name: ch05 · pham vi nhanh
+on:
+  push:
+    branches: [ch05-cache, ch05-cache-em]
+    paths: ['.github/workflows/ch05-pham-vi.yml']
+  pull_request:
+    branches: [ch05-cache]
+  workflow_dispatch:
+jobs:
+  tra:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Minh la ai
+        run: echo "ref=${{ github.ref }}  (cache se luu vao pham vi nay)"
+      - { id: goc,  uses: actions/cache/restore@v5, with: { path: pv, key: ch05-pv-ch05-cache, lookup-only: true } }
+      - { id: em,   uses: actions/cache/restore@v5, with: { path: pv, key: ch05-pv-ch05-cache-em, lookup-only: true } }
+      - { id: pr,   uses: actions/cache/restore@v5, with: { path: pv, key: ch05-pv-pr, lookup-only: true } }
+      - id: ch04
+        uses: actions/cache/restore@v5
+        with: { path: ~/.npm, key: node-cache-Linux-x64-npm-d94a99a05ccf72b4f0b7a3ac3d95ce861b43b23510dd5c837e5f00473739622d, lookup-only: true }
+      - name: Ket qua
+        run: |
+          echo "tu ${{ github.ref }}:"
+          echo "  cache cua ch05-cache     -> '${{ steps.goc.outputs.cache-hit }}'"
+          echo "  cache cua ch05-cache-em  -> '${{ steps.em.outputs.cache-hit }}'"
+          echo "  cache cua lan chay PR     -> '${{ steps.pr.outputs.cache-hit }}'"
+          echo "  cache cua ch04-action    -> '${{ steps.ch04.outputs.cache-hit }}'"
+      - run: mkdir -p pv && echo "${{ github.ref }}" > pv/ref.txt
+      - name: Luu cache vao pham vi CUA MINH
+        uses: actions/cache/save@v5
+        with: { path: pv, key: "ch05-pv-${{ github.event_name == 'pull_request' && 'pr' || github.ref_name }}" }

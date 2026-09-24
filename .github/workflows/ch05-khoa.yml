@@ -1,0 +1,98 @@
+# Chương 5 · bài 5.2 — khoá cache: bất biến, restore-keys theo tiền tố, khoá hằng đông cứng, "version" ẩn.
+name: ch05 · khoa cache
+on:
+  push:
+    branches: [ch05-cache]
+    paths: ['.github/workflows/ch05-khoa.yml']
+  workflow_dispatch:
+env:
+  R: ${{ github.run_id }}
+jobs:
+  luu-cu:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: mkdir -p rk && echo "ban CU — job luu-cu, $(date -u +%T)" > rk/noi-dung.txt
+      - uses: actions/cache/save@v5
+        with: { path: rk, key: 'ch05-rk-${{ github.run_id }}-a' }
+
+  luu-moi:
+    needs: luu-cu
+    runs-on: ubuntu-24.04
+    steps:
+      - run: mkdir -p rk && echo "ban MOI — job luu-moi, $(date -u +%T)" > rk/noi-dung.txt
+      - uses: actions/cache/save@v5
+        with: { path: rk, key: 'ch05-rk-${{ github.run_id }}-b' }
+
+  tien-to:
+    needs: luu-moi
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Khoa chinh truot, tien to trung — lay muc MOI NHAT
+        id: a
+        uses: actions/cache@v5
+        with:
+          path: rk
+          key: 'ch05-rk-${{ github.run_id }}-c'
+          restore-keys: |
+            ch05-rk-${{ github.run_id }}-
+      - run: |
+          echo "cache-hit=${{ steps.a.outputs.cache-hit }}"
+          cat rk/noi-dung.txt
+      - name: Thu tu trong restore-keys thang "moi nhat"
+        id: b
+        uses: actions/cache/restore@v5
+        with:
+          path: rk2
+          key: 'ch05-khong-co-${{ github.run_id }}'
+          restore-keys: |
+            ch05-rk-${{ github.run_id }}-a
+            ch05-rk-${{ github.run_id }}-
+      - run: echo "cache-hit=${{ steps.b.outputs.cache-hit }}  matched=${{ steps.b.outputs.cache-matched-key }}"
+      - name: Khoa chinh xac trung
+        id: c
+        uses: actions/cache/restore@v5
+        with: { path: rk3, key: 'ch05-rk-${{ github.run_id }}-b' }
+      - run: echo "cache-hit=${{ steps.c.outputs.cache-hit }}  matched=${{ steps.c.outputs.cache-matched-key }}"
+
+  bat-bien:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: mkdir -p bb && echo "lan ghi 1" > bb/x.txt
+      - uses: actions/cache/save@v5
+        with: { path: bb, key: 'ch05-bb-${{ github.run_id }}' }
+      - run: echo "lan ghi 2" > bb/x.txt
+      - name: Luu LAI cung khoa
+        uses: actions/cache/save@v5
+        with: { path: bb, key: 'ch05-bb-${{ github.run_id }}' }
+      - run: rm -rf bb
+      - uses: actions/cache/restore@v5
+        with: { path: bb, key: 'ch05-bb-${{ github.run_id }}' }
+      - run: cat bb/x.txt
+
+  phien-ban-an:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: mkdir -p thu-a && echo a > thu-a/f
+      - uses: actions/cache/save@v5
+        with: { path: thu-a, key: 'ch05-ver-${{ github.run_id }}' }
+      - name: Cung khoa, KHAC path
+        id: khac
+        uses: actions/cache/restore@v5
+        with: { path: thu-b, key: 'ch05-ver-${{ github.run_id }}' }
+      - name: Cung khoa, cung path
+        id: cung
+        uses: actions/cache/restore@v5
+        with: { path: thu-a, key: 'ch05-ver-${{ github.run_id }}', lookup-only: true }
+      - run: echo "khac path -> hit='${{ steps.khac.outputs.cache-hit }}' · cung path -> hit='${{ steps.cung.outputs.cache-hit }}'"
+
+  khoa-hang:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: k
+        uses: actions/cache@v5
+        with: { path: hs, key: ch05-khoa-hang }
+      - run: |
+          mkdir -p hs
+          echo "cache-hit=${{ steps.k.outputs.cache-hit }}"
+          echo "noi dung trong cache: $(cat hs/ghi-chu.txt 2>/dev/null || echo '(trong)')"
+          echo "lan chay nay la run ${{ github.run_id }} attempt ${{ github.run_attempt }}" > hs/ghi-chu.txt

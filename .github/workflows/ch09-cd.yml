@@ -48,19 +48,25 @@ jobs:
     concurrency:
       group: ch09-production
       cancel-in-progress: false
+    permissions:
+      contents: write
     env:
       ANH: ${{ needs.dung.outputs.anh }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-      - name: '"Production" đang chạy bản TRƯỚC (commit cha)'
+          fetch-depth: 0
+      - name: Hỏi production ĐANG CHẠY gì (không đoán bằng HEAD^)
         run: |
-          PREV=$(git rev-parse --short=8 HEAD^)
-          # lần deploy đầu tiên: commit cha chưa có ứng dụng ⇒ "production" là bản khoi-dau
-          git show HEAD^:ch09/app/cau-hinh.env > /tmp/cu.env 2>/dev/null || { PREV=khoi-dau; echo HONG=0 > /tmp/cu.env; }
-          . /tmp/cu.env
-          docker build -q --build-arg PHIEN_BAN="$PREV" --build-arg HONG="$HONG" -t "ch09-app:$PREV" ch09/app
+          # "Máy chủ" giả lập ghi bản đang chạy vào cd-dang-chay.txt trên nhánh ch09-prod.
+          # Bản cũ của bước này đoán "bản trước = commit cha" và ĐỎ ở run 36017879471: commit cha là
+          # bản hỏng đã bị rollback, production thật đang chạy bản cũ hơn nữa.
+          PREV=$(gh api "repos/${GITHUB_REPOSITORY}/contents/cd-dang-chay.txt?ref=ch09-prod" --jq .content | base64 -d)
+          echo "production dang chay: $PREV"
+          git worktree add -q /tmp/prev "$PREV"
+          . /tmp/prev/ch09/app/cau-hinh.env
+          docker build -q --build-arg PHIEN_BAN="$PREV" --build-arg HONG="$HONG" -t "ch09-app:$PREV" /tmp/prev/ch09/app
           docker run -d --name ch09-prod -p 19090:8080 "ch09-app:$PREV"
           sleep 2; curl -fsS localhost:19090
           echo "PREV=ch09-app:$PREV" >> "$GITHUB_ENV"
@@ -86,6 +92,13 @@ jobs:
           done
           echo "--- log container ---"; docker logs ch09-prod 2>&1 | tail -3
           exit 1
+      - name: Ghi "production đang chạy" = bản mới
+        run: |
+          API="repos/${GITHUB_REPOSITORY}/contents/cd-dang-chay.txt"
+          SHA_FILE=$(gh api "$API?ref=ch09-prod" --jq .sha)
+          gh api -X PUT "$API" -f branch=ch09-prod -f sha="$SHA_FILE" \
+            -f message="$(date -u +%T) CD run ${GITHUB_RUN_ID}: dang chay ${GITHUB_SHA::8}" \
+            -f content="$(echo "${GITHUB_SHA::8}" | base64 -w0)" --jq '.commit.sha[0:8]'
       - name: TỰ rollback về ảnh trước
         if: failure() && steps.kiem_suc_khoe.outcome == 'failure'
         run: |

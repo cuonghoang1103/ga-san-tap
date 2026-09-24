@@ -1,3 +1,3 @@
-// Ham nho de test. nhanDoi dung iterator helpers (co tu Node 22) — Node 20 khong co.
+// Ham nho de test. (Vong 2: bo iterator helpers — Node 20 khong co.)
 export const cong = (a, b) => a + b;
-export const nhanDoi = (ds) => ds.values().map((x) => x * 2).toArray();
+export const nhanDoi = (ds) => ds.map((x) => x * 2);

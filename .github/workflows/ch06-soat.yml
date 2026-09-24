@@ -35,6 +35,7 @@ jobs:
       - name: zizmor (offline)
         run: |
           pipx run zizmor --version
-          pipx run zizmor --offline --format plain .github/workflows > z.txt 2>&1 || true
+          pipx run zizmor --offline --color never --format plain .github/workflows > z.txt 2>&1 || true
           grep -E '^(error|warning|info)\[' z.txt | sed -E 's/\]:.*/]/' | sort | uniq -c | sort -rn
           tail -1 z.txt
+          grep -n pull_request_target .github/workflows/*.yml | cut -c1-90

@@ -1,4 +1,4 @@
-# Bên DÙNG action phát hành — Chương 12, bài 12.3: con trỏ di động (@ch12-dem-tep-v1) vs ghim SHA.
+# Bên DÙNG action phát hành — Chương 12, bài 12.3: con trỏ di động (@ch12-dem-tep-v1) vs ghim SHA. — lần 2: con trỏ đã dời sang v1.1.0, tệp này KHÔNG đổi dòng uses: nào
 # (Phiên cloud không đẩy được thẻ git ⇒ dùng NHÁNH ch12-dem-tep-v1 làm con trỏ; GitHub giải nhánh/thẻ thành SHA y như nhau.)
 name: ch12-dung-ban
 on:

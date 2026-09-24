@@ -1,0 +1,17 @@
+name: ch00 — xin chao CI
+on:
+  push:
+    branches: [ch00-mo-dau]
+    paths: ['.github/workflows/ch00-xin-chao.yml']
+jobs:
+  chao:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Noi xin chao
+        run: |
+          echo "Xin chao tu runner cua GitHub!"
+          echo "commit: $GITHUB_SHA"
+          echo "nhanh:  $GITHUB_REF_NAME   nguoi push: $GITHUB_ACTOR"
+          echo "CI=$CI  so CPU: $(nproc)  Node: $(node --version)"

@@ -1,0 +1,23 @@
+# Chương 9 · bài 9.1 — workflow đua-vps đã VÁ một chỗ:
+# BẢN VÁ: chung group ch09-prod-khoa với workflow ghcr ⇒ hai workflow không bao giờ chạm production cùng lúc.
+name: ch09 · khoá — vps
+on:
+  push:
+    branches: [ch09-deploy]
+    paths: ['ch09/khoa/**']
+concurrency:
+  group: ch09-prod-khoa
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dựng TypeScript + Next (giả lập 40 s)
+        run: sleep 40
+      - name: Bơm mã mới vào container
+        run: ch09/ghi.sh anh "${GITHUB_SHA::7}" "vps run ${GITHUB_RUN_ID}"

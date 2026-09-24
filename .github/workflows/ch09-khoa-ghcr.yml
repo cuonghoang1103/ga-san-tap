@@ -1,0 +1,27 @@
+# Chương 9 · bài 9.1 — workflow đua-ghcr đã VÁ hai chỗ: group CHUNG với workflow vps (một khoá cho cả
+# production, không huỷ giữa chừng) và migrate (kiểu expand, tương thích ngược) TRƯỚC khi tráo.
+name: ch09 · khoá — ghcr
+on:
+  push:
+    branches: [ch09-deploy]
+    paths: ['ch09/khoa/**']
+concurrency:
+  group: ch09-prod-khoa
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dựng + đẩy ảnh (giả lập 70 s)
+        run: sleep 70
+      - name: Chạy migration TRƯỚC (giả lập 15 s)
+        run: |
+          sleep 15
+          ch09/ghi.sh schema "${GITHUB_SHA::7}" "ghcr run ${GITHUB_RUN_ID}"
+      - name: Tráo container
+        run: ch09/ghi.sh anh "${GITHUB_SHA::7}" "ghcr run ${GITHUB_RUN_ID}"

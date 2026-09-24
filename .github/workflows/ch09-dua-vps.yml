@@ -1,0 +1,20 @@
+# Chương 9 · bài 9.1 — mô phỏng backend-vps.yml của api-backend TRƯỚC 06/07/2026:
+# chạy mỗi push, KHÔNG có concurrency, không migrate — chỉ bơm mã mới vào container.
+name: ch09 · đua — vps
+on:
+  push:
+    branches: [ch09-deploy]
+    paths: ['ch09/dua/**']
+permissions:
+  contents: write
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dựng TypeScript + Next (giả lập 40 s)
+        run: sleep 40
+      - name: Bơm mã mới vào container
+        run: ch09/ghi.sh anh "${GITHUB_SHA::7}" "vps run ${GITHUB_RUN_ID}"

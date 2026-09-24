@@ -1,0 +1,27 @@
+# Chương 9 · bài 9.1 — mô phỏng deploy-ghcr.yml của api-backend TRƯỚC 06/07/2026:
+# chạy mỗi push, group RIÊNG (cancel-in-progress: true), tráo ảnh TRƯỚC rồi mới migrate.
+name: ch09 · đua — ghcr
+on:
+  push:
+    branches: [ch09-deploy]
+    paths: ['ch09/dua/**']
+concurrency:
+  group: ch09-dua-ghcr
+  cancel-in-progress: true
+permissions:
+  contents: write
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dựng + đẩy ảnh (giả lập 70 s)
+        run: sleep 70
+      - name: Tráo container
+        run: ch09/ghi.sh anh "${GITHUB_SHA::7}" "ghcr run ${GITHUB_RUN_ID}"
+      - name: Chạy migration (giả lập 15 s rồi ghi schema)
+        run: |
+          sleep 15
+          ch09/ghi.sh schema "${GITHUB_SHA::7}" "ghcr run ${GITHUB_RUN_ID}"

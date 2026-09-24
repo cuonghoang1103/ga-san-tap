@@ -1,0 +1,115 @@
+# Chương 9 — một đường ống CD MÔ PHỎNG, chạy thật trên runner của GitHub:
+#   kiem → dung (dựng ảnh MỘT lần, gửi đi dạng artifact) → trien-khai (environment có người duyệt,
+#   concurrency khoá production, tráo, kiểm sức khoẻ, TỰ rollback, tóm tắt + "thông báo" in ra log).
+# "Production" là một container NGAY TRONG job (cổng 19090) — không SSH ra máy thật nào.
+name: ch09 · CD mô phỏng
+on:
+  push:
+    branches: ['ch09-*']
+    paths: ['ch09/app/**']
+permissions:
+  contents: read
+jobs:
+  kiem:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kiểm Dockerfile có mặt
+        run: test -f ch09/app/Dockerfile && echo "kiem OK"
+
+  dung:
+    needs: kiem
+    runs-on: ubuntu-24.04
+    outputs:
+      anh: ${{ steps.dung.outputs.anh }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dựng ảnh MỘT lần, gắn thẻ theo SHA
+        id: dung
+        run: |
+          . ch09/app/cau-hinh.env
+          ANH="ch09-app:${GITHUB_SHA::8}"
+          docker build -q --build-arg PHIEN_BAN="${GITHUB_SHA::8}" --build-arg HONG="$HONG" -t "$ANH" ch09/app
+          docker save "$ANH" | gzip > anh.tar.gz
+          ls -lh anh.tar.gz
+          echo "anh=$ANH" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anh-ch09
+          path: anh.tar.gz
+          retention-days: 3
+
+  trien-khai:
+    needs: dung
+    runs-on: ubuntu-24.04
+    environment:
+      name: ch09-production
+      url: https://github.com/cuonghoang1103/ga-san-tap/tree/${{ github.sha }}
+    concurrency:
+      group: ch09-production
+      cancel-in-progress: false
+    env:
+      ANH: ${{ needs.dung.outputs.anh }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: '"Production" đang chạy bản TRƯỚC (commit cha)'
+        run: |
+          PREV=$(git rev-parse --short=8 HEAD^)
+          # lần deploy đầu tiên: commit cha chưa có ứng dụng ⇒ "production" là bản khoi-dau
+          git show HEAD^:ch09/app/cau-hinh.env > /tmp/cu.env 2>/dev/null || { PREV=khoi-dau; echo HONG=0 > /tmp/cu.env; }
+          . /tmp/cu.env
+          docker build -q --build-arg PHIEN_BAN="$PREV" --build-arg HONG="$HONG" -t "ch09-app:$PREV" ch09/app
+          docker run -d --name ch09-prod -p 19090:8080 "ch09-app:$PREV"
+          sleep 2; curl -fsS localhost:19090
+          echo "PREV=ch09-app:$PREV" >> "$GITHUB_ENV"
+          echo "BAT_DAU=$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          name: anh-ch09
+      - name: Nạp ảnh đã dựng sẵn (KHÔNG dựng lại ở đích)
+        run: gunzip -c anh.tar.gz | docker load
+      - name: Tráo sang ảnh mới
+        run: |
+          echo "truoc khi trao: $(docker inspect -f '{{.Config.Image}}' ch09-prod)"
+          docker rm -f ch09-prod
+          docker run -d --name ch09-prod -p 19090:8080 "$ANH"
+          echo "da trao sang: $ANH"
+      - name: Kiểm sức khoẻ (5 lần × 2 s)
+        id: kiem_suc_khoe
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS localhost:19090; then echo "khoe sau lan $i"; exit 0; fi
+            echo "lan $i: chua tra loi (trang thai: $(docker inspect -f '{{.State.Status}} exit={{.State.ExitCode}}' ch09-prod))"
+            sleep 2
+          done
+          echo "--- log container ---"; docker logs ch09-prod 2>&1 | tail -3
+          exit 1
+      - name: TỰ rollback về ảnh trước
+        if: failure() && steps.kiem_suc_khoe.outcome == 'failure'
+        run: |
+          echo "rollback: $ANH -> $PREV"
+          docker rm -f ch09-prod
+          docker run -d --name ch09-prod -p 19090:8080 "$PREV"
+          sleep 2; curl -fsS localhost:19090 && echo "rollback XONG, production khoe lai"
+      - name: Tóm tắt deploy
+        if: always()
+        run: |
+          DANG_CHAY=$(docker inspect -f '{{.Config.Image}}' ch09-prod 2>/dev/null || echo khong-co)
+          {
+            echo "### Deploy ch09-production"
+            echo "| | |"; echo "|---|---|"
+            echo "| Commit | \`${GITHUB_SHA::8}\` |"
+            echo "| Ảnh muốn tráo | \`$ANH\` |"
+            echo "| Kiểm sức khoẻ | ${{ steps.kiem_suc_khoe.outcome }} |"
+            echo "| Production đang chạy | \`$DANG_CHAY\` |"
+            echo "| Thời gian | $(( $(date +%s) - BAT_DAU )) s |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
+      - name: Thông báo (giả lập — chỉ in, không gửi đi đâu)
+        if: failure()
+        run: |
+          echo "::error title=Deploy hong::${GITHUB_SHA::8} khong qua kiem suc khoe, da rollback ve $PREV"
+          echo "[THONG BAO GIA LAP] Deploy ${GITHUB_SHA::8} HONG o buoc kiem suc khoe -> production da ve $PREV"
+          echo "Log: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

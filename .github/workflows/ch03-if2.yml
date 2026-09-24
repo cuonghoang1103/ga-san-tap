@@ -11,14 +11,22 @@ jobs:
     env:
       TAT: 'false'
     steps:
-      - name: "01 if: $ {{ 'abc' }}"
-        if: ${{ 'abc' }}
+      - id: x
+        run: echo "co=false" >> "$GITHUB_OUTPUT"
+      - name: "15 if: steps.x.outputs.co"
+        if: steps.x.outputs.co
+        run: echo chay
+      - name: "16 if: $ {{ steps.x.outputs.co }}"
+        if: ${{ steps.x.outputs.co }}
+        run: echo chay
+      - name: "17 if: steps.x.outputs.co == 'true'"
+        if: steps.x.outputs.co == 'true'
+        run: echo chay
+      - name: "18 if: fromJSON(steps.x.outputs.co)"
+        if: fromJSON(steps.x.outputs.co)
         run: echo chay
       - name: "02 if: $ {{ 'null' }}"
         if: ${{ 'null' }}
-        run: echo chay
-      - name: "03 if: $ {{ 'False' }}"
-        if: ${{ 'False' }}
         run: echo chay
       - name: "04 if: format('{0}', 'false')"
         if: format('{0}', 'false')

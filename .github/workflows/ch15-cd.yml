@@ -84,7 +84,10 @@ jobs:
           DIGEST: ${{ steps.dung.outputs.digest }}
         run: |
           docker buildx imagetools inspect "${ANH_GOC}@${DIGEST}" | head -20
-          gh attestation verify "oci://${ANH_GOC}@${DIGEST}" --repo "$GITHUB_REPOSITORY"
+          gh attestation verify "oci://${ANH_GOC}@${DIGEST}" --repo "$GITHUB_REPOSITORY" --format json \
+            | jq -r '.[] | .verificationResult.signature.certificate
+                     | "da ky boi: \(.buildSignerURI)\nkich hoat: \(.githubWorkflowTrigger) · commit \(.sourceRepositoryDigest[0:7]) · runner \(.runnerEnvironment)"'
+          echo "gh attestation verify: exit $?"
 
   trien-khai:
     needs: anh

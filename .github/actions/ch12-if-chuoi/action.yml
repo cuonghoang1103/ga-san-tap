@@ -1,0 +1,22 @@
+# Chương 12, bài 12.2: input của action là CHUỖI — if: inputs.x với 'false' có chạy không?
+name: ch12 if chuoi
+description: Do cach if doc mot input chuoi
+inputs:
+  co:
+    description: "'true' hoac 'false'"
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - if: inputs.co
+      shell: bash
+      run: echo "A · if inputs.co            -> CHAY (co='${{ inputs.co }}')"
+    - if: inputs.co == 'true'
+      shell: bash
+      run: echo "B · if inputs.co == 'true'  -> CHAY"
+    - if: inputs.co == true
+      shell: bash
+      run: echo "C · if inputs.co == true    -> CHAY"
+    - if: fromJSON(inputs.co)
+      shell: bash
+      run: echo "D · if fromJSON(inputs.co)  -> CHAY"

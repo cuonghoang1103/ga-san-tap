@@ -10,10 +10,12 @@ cd /srv/phong-kham
 docker network inspect "$MANG" >/dev/null 2>&1 || docker network create "$MANG" >/dev/null
 if ! docker inspect ch15-db >/dev/null 2>&1; then
   echo "[vps] chua co Postgres -> tao ch15-db"
+  docker pull -q postgres:17-alpine >/dev/null
   docker run -d --name ch15-db --network "$MANG" -e POSTGRES_PASSWORD="$DB_PASSWORD" postgres:17-alpine >/dev/null
 fi
 
-TRUOC=$(docker inspect -f '{{.Config.Image}}' ch15-app 2>/dev/null || echo "khong-co")
+TRUOC=$(docker ps -a --filter name=^ch15-app$ --format '{{.Image}}')
+TRUOC=${TRUOC:-khong-co}
 echo "[vps] dang chay: $TRUOC"
 echo "[vps] keo: $ANH"
 docker pull -q "$ANH"

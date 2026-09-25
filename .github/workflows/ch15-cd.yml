@@ -140,23 +140,29 @@ jobs:
           ssh vps 'echo "da vao $(hostname) voi user $(whoami)"; docker version --format "docker {{.Server.Version}}"'
       - name: Hoi production DANG CHAY ban nao (Deployments API)
         run: |
-          # Lan deploy THANH CONG gan nhat cua environment nay = ban dang chay = dich de quay lui.
+          # Lan deploy THANH CONG gan nhat TU NHANH ch15-capstone = ban dang chay = dich de quay lui.
+          # (Lan 2 bo loc ref va tin nham mot deployment "success" cua mot job thu tren nhanh khac — run 36075225804.)
           PREV_SHA=""
-          for id in $(gh api "repos/${GITHUB_REPOSITORY}/deployments?environment=ch15-production&per_page=30" --jq '.[].id'); do
+          for id in $(gh api "repos/${GITHUB_REPOSITORY}/deployments?environment=ch15-production&ref=ch15-capstone&per_page=30" --jq '.[].id'); do
             st=$(gh api "repos/${GITHUB_REPOSITORY}/deployments/${id}/statuses?per_page=1" --jq '.[0].state // ""')
             if [ "$st" = "success" ]; then
               PREV_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/deployments/${id}" --jq .sha); break
             fi
           done
+          PREV=""
           if [ -n "$PREV_SHA" ]; then
             PREV="${ANH_GOC}:sha-${PREV_SHA::7}"
-            echo "production dang chay: $PREV (deployment $id)"
+            if docker buildx imagetools inspect "$PREV" >/dev/null 2>&1; then
+              echo "production dang chay: $PREV (deployment $id)"
+            else
+              echo "::warning::deployment $id tro toi $PREV nhung anh KHONG ton tai — khong co dich quay lui"; PREV=""
+            fi
           else
-            PREV=""; echo "chua co lan deploy thanh cong nao — lan dau, khong co dich quay lui"
+            echo "chua co lan deploy thanh cong nao tu ch15-capstone — lan dau, khong co dich quay lui"
           fi
           echo "PREV=$PREV" >> "$GITHUB_ENV"
       - name: Dang nhap GHCR tren VPS (token song den het job)
-        run: printf '%s\n' "$GH_TOKEN" | ssh vps "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin" 2>&1 | tail -1
+        run: printf '%s\n' "$GH_TOKEN" | ssh vps "docker login ghcr.io -u '$GITHUB_ACTOR' --password-stdin 2>&1 | grep -v WARNING"
       - name: "MO PHONG: dua VPS ve trang thai production hien tai"
         if: env.PREV != ''
         run: printf '%s\n' "$DB_PASSWORD" | ssh vps "read -r DB_PASSWORD && export DB_PASSWORD && /srv/phong-kham/trien-khai.sh '$PREV'"
@@ -193,7 +199,7 @@ jobs:
       - name: Tom tat deploy
         if: always()
         run: |
-          DANG_CHAY=$(docker inspect -f '{{.Config.Image}}' ch15-app 2>/dev/null || echo khong-co)
+          DANG_CHAY=$(docker ps -a --filter name=^ch15-app$ --format '{{.Image}}'); DANG_CHAY=${DANG_CHAY:-khong-co}
           {
             echo "### Deploy ch15-production"
             echo "| | |"; echo "|---|---|"

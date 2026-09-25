@@ -169,6 +169,7 @@ jobs:
       - name: Deploy qua SSH
         run: |
           echo "BAT_DAU=$(date +%s)" >> "$GITHUB_ENV"
+          echo "bat dau deploy: $(date -u +%T)"
           printf '%s\n' "$DB_PASSWORD" | ssh vps "read -r DB_PASSWORD && export DB_PASSWORD && /srv/phong-kham/trien-khai.sh '$ANH'"
       - name: Smoke test (di duong nguoi dung di)
         id: smoke
@@ -187,8 +188,17 @@ jobs:
           echo "--- loi dau tien trong log container ---"; docker logs ch15-app 2>&1 | grep -m1 -E "^Error|Error:" || true
           echo "--- 3 dong log cuoi ---"; docker logs ch15-app 2>&1 | tail -3
           exit 1
+      - name: Theo doi sau deploy (30 giay)
+        id: theo-doi
+        run: |
+          # Giu production 30 giay de concurrency co cho ma xep hang (bai 15.3), va de bat loi chi lo ra sau vai giay.
+          for i in $(seq 1 6); do
+            sleep 5
+            curl -fsS --max-time 2 -o /dev/null http://localhost:19153/healthz || { echo "::error::giay thu $((i*5)): healthz hong"; exit 1; }
+          done
+          echo "30 giay sau deploy: van khoe · $(date -u +%T)"
       - name: TU quay lui ve ban truoc
-        if: failure() && steps.smoke.outcome == 'failure' && env.PREV != ''
+        if: failure() && (steps.smoke.outcome == 'failure' || steps.theo-doi.outcome == 'failure') && env.PREV != ''
         run: |
           echo "quay lui: $ANH -> $PREV"
           printf '%s\n' "$DB_PASSWORD" | ssh vps "read -r DB_PASSWORD && export DB_PASSWORD && /srv/phong-kham/trien-khai.sh '$PREV'"

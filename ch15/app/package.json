@@ -1,13 +1,13 @@
 {
   "name": "ch15-phong-kham",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Dat lich phong kham — app toi gian cho du an cuoi khoa GitHub Actions (chuong 15)",
   "private": true,
   "type": "module",
-  "main": "src/server.js",
+  "main": "src/index.js",
   "engines": { "node": ">=22" },
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node src/index.js",
     "lint": "eslint .",
     "typecheck": "tsc -p jsconfig.json",
     "test": "node --test \"test/*.test.js\""

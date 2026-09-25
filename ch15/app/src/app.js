@@ -34,6 +34,14 @@ export function taoApp(pool) {
     res.json(rows);
   });
 
+  // v1.1.0: danh sach bac si dang co lich, kem so lich cua moi nguoi
+  app.get('/api/bac-si', async (_req, res) => {
+    const { rows } = await pool.query(
+      'SELECT bac_si AS "bacSi", count(*)::int AS "soLich" FROM lich_hen GROUP BY bac_si ORDER BY bac_si',
+    );
+    res.json(rows);
+  });
+
   app.post('/api/lich', async (req, res) => {
     const loi = kiemLich(req.body ?? {});
     if (loi.length) return res.status(400).json({ loi });

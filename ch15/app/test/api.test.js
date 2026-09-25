@@ -1,3 +1,4 @@
+// PR #10: them /api/bac-si — test tich hop dem lich theo bac si
 // Test tich hop: chay voi Postgres THAT (service container trong CI).
 // Khong co DATABASE_URL (vd tren may khong bat Postgres) thi BO QUA — nhung CI luon dat bien nay.
 import { test, before, after } from 'node:test';
@@ -50,4 +51,10 @@ test('yeu cau sai thi 400 kem danh sach loi', { skip: !coDb }, async () => {
   const r = await dat({ bacSi: 'BS Lan', batDau: '2026-10-01T09:10:00Z' });
   assert.equal(r.status, 400);
   assert.equal((await r.json()).loi.length, 2);
+});
+
+test('danh sach bac si dem dung so lich', { skip: !coDb }, async () => {
+  await dat({ bacSi: 'BS Hoa', benhNhan: 'An', batDau: '2026-10-01T10:00:00Z' });
+  const ds = await (await fetch(`${goc}/api/bac-si`)).json();
+  assert.deepEqual(ds, [{ bacSi: 'BS Hoa', soLich: 1 }, { bacSi: 'BS Lan', soLich: 1 }]);
 });

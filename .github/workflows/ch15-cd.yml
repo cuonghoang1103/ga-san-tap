@@ -184,7 +184,8 @@ jobs:
             echo "lan $i: chua tra loi (container: $(docker inspect -f '{{.State.Status}} restart={{.RestartCount}} exit={{.State.ExitCode}}' ch15-app))"
             sleep 2
           done
-          echo "--- 5 dong log cuoi cua container ---"; docker logs ch15-app 2>&1 | tail -5
+          echo "--- loi dau tien trong log container ---"; docker logs ch15-app 2>&1 | grep -m1 -E "^Error|Error:" || true
+          echo "--- 3 dong log cuoi ---"; docker logs ch15-app 2>&1 | tail -3
           exit 1
       - name: TU quay lui ve ban truoc
         if: failure() && steps.smoke.outcome == 'failure' && env.PREV != ''
